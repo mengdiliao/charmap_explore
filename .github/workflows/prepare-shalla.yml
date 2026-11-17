@@ -1,0 +1,31 @@
+name: Prepare Shalla
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/prepare-shalla.yml'
+      - 'scripts/prepare_shalla.py'
+      - 'requirements.txt'
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.txt
+      - run: python scripts/prepare_shalla.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shalla-dataset-and-official-workloads
+          path: |
+            data/shalla/
+            .upstream/shalla/data/shalla.tar.gz
+          include-hidden-files: true
+          retention-days: 30
+          if-no-files-found: error
