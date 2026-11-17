@@ -1,0 +1,5 @@
+/data/
+/.upstream/
+/build/
+__pycache__/
+*.part
