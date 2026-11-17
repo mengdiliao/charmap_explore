@@ -47,7 +47,7 @@ def main():
     keys, labels = [], bytearray()
     with source.open(encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
-        if reader.fieldnames != ["url", "label"]:
+        if not {"url", "label"}.issubset(reader.fieldnames or []):
             raise ValueError(reader.fieldnames)
         for row in reader:
             k = row["url"]
