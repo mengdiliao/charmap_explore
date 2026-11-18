@@ -31,7 +31,7 @@ jobs:
           python3 - <<'PY'
           import json,random
           from pathlib import Path
-          for i in range(1,4):
+          for i in range(1,2):
               rng=random.Random(i)
               seen={(0,1,-2,-1)}; a=[]
               for k in [4]*8+[2,3,5,6]:
@@ -48,7 +48,9 @@ jobs:
           python3 - <<'PY'
           import csv
           rows=list(csv.DictReader(open('/tmp/test/proposal_results.csv')))
-          assert len(rows)==144
+          assert len(rows)==48
+          assert sum(r["group"]=="AI" for r in rows)==24
+          assert sum(r["group"]=="Random" for r in rows)==24
           assert all(int(r['false_negatives'])==0 for r in rows)
           assert all(None not in r for r in rows)
           PY

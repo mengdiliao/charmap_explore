@@ -97,10 +97,11 @@ Return ONLY JSON, an object with a candidates array of exactly 12 unique positio
 """
     if args.smoke: prompt = "SYNTHETIC TEST FIXTURE ONLY — NOT A RESEARCH PROMPT\n\n"+prompt
     (out/"prompt.md").write_text(prompt,encoding="utf-8")
-    save(out/"config.json",{"level":1,"model":MODEL,"effort":"high","max_tokens":16000,"partition_size":8 if args.smoke else 8000,"budget":512,"partition_seed":55,"calls":3,"candidates_per_call":12,"random_seeds":[155,255,355],"input_sha256":hashes,"prompt_sha256":digest(out/"prompt.md"),"smoke":args.smoke})
+    save(out/"config.json",{"level":1,"model":MODEL,"effort":"high","max_tokens":16000,"partition_size":8 if args.smoke else 8000,"budget":512,"partition_seed":55,"calls":1,"candidates_per_call":12,"random_seeds":[155],"input_sha256":hashes,"prompt_sha256":digest(out/"prompt.md"),"smoke":args.smoke})
     print(out/"prompt.md")
 def config(out):
     c=json.loads((out/"config.json").read_text())
+    if c.get("calls") != 1 or len(c.get("random_seeds", [])) != 1: raise ValueError("This version requires a one-call config. Prepare a new --out directory if you have an old three-call config.")
     if digest(out/"prompt.md")!=c["prompt_sha256"]: raise ValueError("prompt changed since prepare")
     return c
 def generate(args):
@@ -169,7 +170,7 @@ def report(args):
     lines=["# Experiment 3 — Level 1 results","",("SYNTHETIC SMOKE TEST ONLY" if f["config"]["smoke"] else "Full Shalla workload."),f"Unique joint maps: {len(f['designs'])}; proposal count: {len(f['proposals'])}.","", "| Workload | Group | Call | N | Best % | Median % | Mean % | Above Bloom |","|---|---|---:|---:|---:|---:|---:|---:|"]
     for w in ("uniform","zipf"):
         for group in ("AI","Random"):
-            for call in (1,2,3,"all"):
+            for call in range(1,f["config"]["calls"]+1):
                 a=[r for r in proposals if r["workload"]==w and r["group"]==group and (call=="all" or r["call"]==call)]
                 v=[float(r["pruning_pct"]) for r in a];lines.append(f"| {w} | {group} | {call} | {len(v)} | {max(v):.4f} | {statistics.median(v):.4f} | {statistics.mean(v):.4f} | {sum(r['delta_bloom_pp']>0 for r in a)} |")
         lines.extend(["",f"{w}: Bloom {float(by[w,'OptimizedBloom']['pruning_pct']):.4f}%, reference {float(by[w,'ReferenceJointCM']['pruning_pct']):.4f}%.",""])
@@ -177,5 +178,5 @@ def report(args):
     (p/"report.md").write_text("\n".join(lines)+"\n")
     print((p/"report.md").read_text())
 def main():
-    a=argparse.ArgumentParser();a.add_argument("command",choices=["prepare","generate","freeze","evaluate","report"]);a.add_argument("--data",type=Path,default=ROOT/"data/shalla");a.add_argument("--out",type=Path,default=ROOT/"runs/experiment3_level1");a.add_argument("--call",type=int,choices=[1,2,3]);a.add_argument("--smoke",action="store_true",help="test fixture only, never research results");args=a.parse_args();globals()[args.command](args)
+    a=argparse.ArgumentParser();a.add_argument("command",choices=["prepare","generate","freeze","evaluate","report"]);a.add_argument("--data",type=Path,default=ROOT/"data/shalla");a.add_argument("--out",type=Path,default=ROOT/"runs/experiment3_level1");a.add_argument("--call",type=int,choices=[1]);a.add_argument("--smoke",action="store_true",help="test fixture only, never research results");args=a.parse_args();globals()[args.command](args)
 if __name__=="__main__":main()
