@@ -149,10 +149,10 @@ def evaluate(args):
         if digest(args.out/n)!=h: raise ValueError("response changed after freeze")
     ts=args.out/"designs.tsv";ts.write_text("".join(x["id"]+"\t"+"\t".join(map(str,x["positions"]))+"\n" for x in f["designs"]))
     gradle=[str(ROOT/"gradlew")] if os.name!="nt" else [str(ROOT/"gradlew.bat")]
-    sources=sorted((ROOT/"src/main/java/charmap").glob("*.java"))
+    sources=sorted((ROOT/"src/main/java/charmap").rglob("*.java"))
     version=subprocess.check_output(gradle+["--version"],cwd=ROOT,text=True)
     build_files=[ROOT/"build.gradle",ROOT/"settings.gradle",ROOT/"gradle/wrapper/gradle-wrapper.properties",ROOT/"gradle/wrapper/gradle-wrapper.jar"]
-    save(args.out/"runtime.json",{"gradle_version_info":version,"platform":sys.platform,"source_sha256":{p.name:digest(p) for p in sources},"build_sha256":{str(p.relative_to(ROOT)):digest(p) for p in build_files},"frozen_sha256":digest(args.out/"frozen.json"),"layout":"libstdc++-mt19937_64-paired-shuffle-v1"})
+    save(args.out/"runtime.json",{"gradle_version_info":version,"platform":sys.platform,"source_sha256":{str(p.relative_to(ROOT)):digest(p) for p in sources},"build_sha256":{str(p.relative_to(ROOT)):digest(p) for p in build_files},"frozen_sha256":digest(args.out/"frozen.json"),"layout":"libstdc++-mt19937_64-paired-shuffle-v1"})
     subprocess.run(gradle+["--console=plain","positionEvaluator","-PdataDir="+str(args.data.resolve()),"-PoutputDir="+str((args.out/"benchmark").resolve()),"-PpartitionSize="+str(c["partition_size"]),"-Pbudget="+str(c["budget"]),"-Pcandidates="+str(ts.resolve()),"-Pseed="+str(c["partition_seed"])],cwd=ROOT,check=True)
     report(args)
 def report(args):

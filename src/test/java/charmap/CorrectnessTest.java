@@ -1,4 +1,7 @@
 package charmap;
+import charmap.core.*;
+import charmap.evaluation.Evaluator;
+import charmap.statistics.BloomFilter;
 
 import static org.junit.jupiter.api.Assertions.*;
 import java.nio.file.*;
@@ -8,29 +11,29 @@ import org.junit.jupiter.api.io.TempDir;
 
 class CorrectnessTest {
     @Test void asciiPositionsAndMissing() {
-        assertEquals(97, Core.ch("abc",0));
-        assertEquals(99, Core.ch("abc",-1));
-        assertEquals(128, Core.ch("a",1));
-        assertEquals(128, Core.ch("",-1));
-        assertEquals(97*257L+128, Core.token("a", new int[]{0,1}));
-        assertEquals(97*256L+99,Core.pair("abc",0,-1));
+        assertEquals(97, CharacterEncoding.ch("abc",0));
+        assertEquals(99, CharacterEncoding.ch("abc",-1));
+        assertEquals(128, CharacterEncoding.ch("a",1));
+        assertEquals(128, CharacterEncoding.ch("",-1));
+        assertEquals(97*257L+128, CharacterEncoding.token("a", new int[]{0,1}));
+        assertEquals(97*256L+99,CharacterEncoding.pair("abc",0,-1));
     }
     @Test void referenceBloomK() {
-        assertEquals(1,Core.optimalK(8000,512));
-        assertEquals(3,Core.optimalK(500,256));
+        assertEquals(1,BloomFilter.optimalK(8000,512));
+        assertEquals(3,BloomFilter.optimalK(500,256));
     }
     @Test void unsignedBucketAndHash() {
-        assertEquals(5,Core.bucket(-1L,10));
-        assertEquals(0,Core.bucket(0L,4096));
-        assertEquals(0,Core.mix(0L));
-        assertEquals(Core.hash("abc"),Core.hash(new String("abc")));
+        assertEquals(5,HashUtils.bucket(-1L,10));
+        assertEquals(0,HashUtils.bucket(0L,4096));
+        assertEquals(0,HashUtils.mix(0L));
+        assertEquals(HashUtils.hash("abc"),HashUtils.hash(new String("abc")));
     }
     @Test void legacyShuffle() {
         var a=new ArrayList<>(List.of("0","1","2","3","4","5","6"));
-        Core.shuffle(a,55);
+        PartitionLayout.shuffle(a,55);
         assertEquals(List.of("3","0","5","2","6","4","1"),a);
         var b=new ArrayList<>(List.of("0","1","2","3","4","5","6","7"));
-        Core.shuffle(b,55);
+        PartitionLayout.shuffle(b,55);
         assertEquals(List.of("2","5","4","6","1","3","7","0"),b);
     }
     @Test void membersNeverPrunedAndQueriesWeighted(@TempDir Path dir)throws Exception {
@@ -42,7 +45,7 @@ class CorrectnessTest {
         Path candidates=dir.resolve("designs.tsv");
         Files.writeString(candidates,"ReferenceJointCM\t0\t1\t-2\t-1\nShortTuple\t0\t15\n");
         Path out=dir.resolve("out");
-        new Evaluator(new Core.Data(dir,55),2,32,out,"position").run(candidates);
+        new Evaluator(new Dataset(dir,55),2,32,out,"position").run(candidates);
         List<String> lines=Files.readAllLines(out.resolve("results.csv"));
         assertEquals(9,lines.size()); // 4 algorithms x 2 workloads + header
         String[] header=lines.get(0).split(",",-1);

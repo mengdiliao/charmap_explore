@@ -1,6 +1,6 @@
 # Gradle quick start
 
-JDK 21, Python 3.10+; the committed official Gradle 8.14.3 wrapper downloads its pinned distribution on first use. No separate Gradle installation needed. JUnit 5.11.4 runs correctness tests. The six production Java sources moved unchanged to src/main/java/charmap; test source is src/test/java/charmap. Existing source data, results, and experiment parameters are unchanged.
+JDK 21, Python 3.10+; the committed official Gradle 8.14.3 wrapper downloads its pinned distribution on first use. No separate Gradle installation needed. JUnit 5.11.4 runs correctness tests. Production Java sources are organized below src/main/java/charmap in core, statistics, evaluation and experiments; test source is src/test/java/charmap. Existing source data, results, and experiment parameters are unchanged.
 
     ./gradlew --version
     ./gradlew build

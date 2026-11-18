@@ -5,3 +5,12 @@ Dataset preparation for equality-based partition pruning over real strings. The 
 ## Java build and experiment tasks
 
 Use JDK 21 and the committed Gradle Wrapper (`./gradlew build`, `./gradlew test`). See [Gradle quick start](docs/gradle.md) and [Experiment 3](docs/experiment3-level1.md). No standalone Gradle installation is necessary.
+
+## Java source organization
+
+- `core/`: hash functions, character encoding, data loading, partition layout, and metadata serialization.
+- `statistics/`: existing bitmap statistics and shared transposed bitmap storage.
+- `evaluation/`: construction and evaluation, joint diagnostics, and CSV utilities. The legacy truncated MinMax remains in Evaluator; no new statistic is introduced.
+- `experiments/`: the four existing experiment entry points.
+
+The Gradle task names, data paths, hash algorithms, partition layout, metadata format, and experiment parameters remain unchanged. See [code organization](docs/code-organization.md).

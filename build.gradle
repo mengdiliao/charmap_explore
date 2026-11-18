@@ -35,7 +35,7 @@ def experiment = { String name, String entry, Closure arguments, String descript
         description = descriptionText
         dependsOn tasks.named('classes')
         classpath = sourceSets.main.runtimeClasspath
-        mainClass = 'charmap.' + entry
+        mainClass = 'charmap.experiments.' + entry
         javaLauncher = javaToolchains.launcherFor {
             languageVersion = JavaLanguageVersion.of(21)
         }
