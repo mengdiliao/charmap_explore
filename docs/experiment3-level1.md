@@ -4,7 +4,7 @@ P=8000, B=512 bytes, seed55; all 2,926,705 Shalla stored keys and both 10M offic
 
 ## Local quick start (macOS/Linux)
 
-Install Python 3.10+ and a C++17 compiler (on macOS: xcode-select --install; run with CXX=clang++ if needed). No Python third-party package needed for Experiment 3 itself.
+Install Python 3.10+ and JDK 21 (on macOS: brew install openjdk@21, then configure JAVA_HOME and PATH). No Python third-party package needed for Experiment 3 itself.
 Use the already prepared data artifact at https://github.com/mengdiliao/charmap_explore/actions/runs/44195004791/artifacts/14377239207 (requires repository access; expires after 30 days). Extract at repository root, such that data/shalla/dataset.txt, queries_uniform.txt, queries_zipf.txt exist. If expired, regenerate with scripts/prepare_shalla.py on Linux with Python3.12, GCC and pinned requirements; C rand() is platform dependent, so macOS regeneration may fail expected hashes. Use exact artifact wherever possible.
 
     python3 scripts/experiment3.py prepare
@@ -31,11 +31,11 @@ At https://claude.ai/ start one new chat, select Opus 5.5 if available, turn on 
     python3 scripts/experiment3.py freeze
     python3 scripts/experiment3.py evaluate
 
-Both workloads evaluated in one run. No API used in freeze/evaluate. Python validates combinations, fixes tuple order, generates seeded controls, writes frozen.json before benchmark. To repeat use another --out path on every command. On macOS std::shuffle implementation may differ from Ubuntu/GCC used in prior experiments: all baselines recomputed on same local partition layout; for exact cross-platform historical result replication use Linux/GCC with same libstdc++ implementation. Memory and run time depend on machine; no production latency claims.
+Both workloads evaluated in one run. No API used in freeze/evaluate. Python validates combinations, fixes tuple order, generates seeded controls, writes frozen.json before benchmark. To repeat use another --out path on every command. Java uses a pinned port of the original libstdc++ mt19937_64 shuffle instead of Collections.shuffle, ensuring a platform-independent layout subject to the archived-result parity gate. Set JAVA_HEAP (default 4g) if needed. C++ files remain legacy references. Memory and run time depend on machine; no production latency claims.
 
 Output under runs/experiment3_level1 (gitignored):
 - prompt.md, config.json, examples.json, response_N.json, api_raw_N.json, frozen.json
-- runtime.json (compiler, evaluator and frozen design hashes)
+- runtime.json (Java version, source and frozen design hashes)
 - benchmark/results.csv, physical summary binaries
 - proposal_results.csv: all AI/random proposals, both workloads, deltas
 - report.md: best, median, mean, counts above Bloom by group/call.

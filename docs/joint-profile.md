@@ -8,7 +8,8 @@ Full source dataset and both 10M query files, identical shuffle (std::mt19937_64
 - bitmaps.csv: hash modulo B*8, per-partition occupancy, saturation and collisions. Global excess collision fraction = (global distinct tokens - occupied global buckets) / global distinct tokens. Partition collision fraction = sum(NDV - occupied buckets)/sum(NDV); not probability of a colliding pair. Saturation is average occupied bits / capacity. Hash collision loss = exact projection pruning minus hashed projection pruning in percentage points. Query weights and final partial partition retained; comparing pruning of unweighted partition pairs, not row read cost. Exact ceiling assumes collision-free direct tuple encoding, not that mapping overhead is free. Fixed byte budgets, previous fixed BPK sizes, and scaled joint-hybrid tuple capacities included.
 
 Run locally with prepared data:
-    g++ -std=c++17 -O3 -march=native experiments/joint_profile.cpp -o joint_profile
-    ./joint_profile data/shalla results/joint_profile
+    mkdir -p build/classes
+    javac --release 21 -d build/classes src/charmap/*.java
+    java -Xmx4g -cp build/classes charmap.JointProfile data/shalla results/java_joint_profile
 
 No parameter fitting, holdout required for any subsequent selection. Results are diagnostic on the full workloads.

@@ -148,11 +148,13 @@ def evaluate(args):
     for n,h in f["response_sha256"].items():
         if digest(args.out/n)!=h: raise ValueError("response changed after freeze")
     ts=args.out/"designs.tsv";ts.write_text("".join(x["id"]+"\t"+"\t".join(map(str,x["positions"]))+"\n" for x in f["designs"]))
-    build=args.out/"position_evaluator";compiler=os.environ.get("CXX","g++")
-    subprocess.run([compiler,"-std=c++17","-O3",str(ROOT/"experiments/position_evaluator.cpp"),"-o",str(build)],check=True)
-    version=subprocess.check_output([compiler,"--version"],text=True).splitlines()[0]
-    save(args.out/"runtime.json",{"compiler":version,"platform":sys.platform,"evaluator_sha256":digest(ROOT/"experiments/position_evaluator.cpp"),"frozen_sha256":digest(args.out/"frozen.json")})
-    subprocess.run([str(build.resolve()),str(args.data),str(args.out/"benchmark"),str(c["partition_size"]),str(c["budget"]),str(ts),str(c["partition_seed"])],check=True)
+    build=args.out/"classes";build.mkdir(exist_ok=True)
+    javac=os.environ.get("JAVAC","javac");java=os.environ.get("JAVA","java")
+    sources=sorted((ROOT/"src/charmap").glob("*.java"))
+    subprocess.run([javac,"--release","21","-d",str(build),*map(str,sources)],check=True)
+    version=subprocess.check_output([java,"-version"],stderr=subprocess.STDOUT,text=True).splitlines()[0]
+    save(args.out/"runtime.json",{"java":version,"platform":sys.platform,"source_sha256":{p.name:digest(p) for p in sources},"frozen_sha256":digest(args.out/"frozen.json"),"layout":"libstdc++-mt19937_64-paired-shuffle-v1"})
+    subprocess.run([java,"-Xmx"+os.environ.get("JAVA_HEAP","4g"),"-cp",str(build),"charmap.PositionEvaluator",str(args.data),str(args.out/"benchmark"),str(c["partition_size"]),str(c["budget"]),str(ts),str(c["partition_seed"])],check=True)
     report(args)
 def report(args):
     p=args.out;f=json.loads((p/"frozen.json").read_text())

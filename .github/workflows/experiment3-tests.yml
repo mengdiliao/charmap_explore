@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'experiments/position_evaluator.cpp'
+      - 'src/charmap/**'
       - 'scripts/experiment3.py'
       - '.github/workflows/experiment3-tests.yml'
 permissions:
@@ -15,6 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
       - name: Synthetic end-to-end test (not AI or research results)
         run: |
           mkdir -p /tmp/smoke
@@ -59,6 +63,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
       - uses: actions/download-artifact@v4
         with:
           name: shalla-dataset-and-official-workloads
@@ -70,8 +78,8 @@ jobs:
           python3 scripts/experiment3.py prepare --out /tmp/real
           cat /tmp/real/examples.json
           printf 'ReferenceJointCM\t0\t1\t-2\t-1\n' >/tmp/reference.tsv
-          g++ -std=c++17 -O3 experiments/position_evaluator.cpp -o /tmp/eval
-          /tmp/eval data/shalla /tmp/ref 8000 512 /tmp/reference.tsv 55
+          mkdir -p build/classes && javac --release 21 -d build/classes src/charmap/*.java
+          java -Xmx4g -cp build/classes charmap.PositionEvaluator data/shalla /tmp/ref 8000 512 /tmp/reference.tsv 55
           python3 - <<'PY'
           import csv
           a={(r['workload'],r['algorithm']):r for r in csv.DictReader(open('/tmp/ref/results.csv'))}

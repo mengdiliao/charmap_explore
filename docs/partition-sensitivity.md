@@ -10,7 +10,8 @@ Metrics: pruning_pct counts query-partition pairs; partition_fpr_pct conditions 
 
 Run:
     mkdir -p build results
-    g++ -std=c++17 -O3 -march=native experiments/partition_sensitivity.cpp -o build/partition_sensitivity
-    build/partition_sensitivity data/shalla results/p8000_b1024 8000 1024
+    mkdir -p build/classes
+    javac --release 21 -d build/classes src/charmap/*.java
+    java -Xmx4g -cp build/classes charmap.PartitionSensitivity data/shalla results/p8000_b1024 8000 1024
 
 GitHub Actions uses the verified artifact from run 44195004791; if expired, rerun data preparation and run locally or update run-id. Only CSV and data manifests are uploaded; summary binaries are produced and measured on runner but can be regenerated locally.

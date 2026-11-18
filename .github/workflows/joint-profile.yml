@@ -4,7 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'experiments/joint_profile.cpp'
+      - 'src/charmap/**'
+      - 'scripts/verify_java_parity.py'
       - '.github/workflows/joint-profile.yml'
 permissions:
   contents: read
@@ -15,6 +16,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
       - uses: actions/download-artifact@v4
         with:
           name: shalla-dataset-and-official-workloads
@@ -26,13 +31,15 @@ jobs:
           echo '081bf7628046d046533f63ed2e049e4aff6bd21d3151b64a41c8cbfc584a4a2a  data/shalla/dataset.txt' | sha256sum -c -
           echo '095d4cbd2cc6091bd6a660ad0826c203b00b8d70c364a0eb8319b86d49529fb8  data/shalla/queries_uniform.txt' | sha256sum -c -
           echo '7058cc63df718c76872a6788a35161a2d19156db739c4400f2a548799559cc52  data/shalla/queries_zipf.txt' | sha256sum -c -
-      - run: mkdir -p build && g++ -std=c++17 -O3 -march=native experiments/joint_profile.cpp -o build/joint_profile
+      - run: mkdir -p build/classes && javac --release 21 -d build/classes src/charmap/*.java
       - name: Full profiling
         run: |
-          build/joint_profile data/shalla results/joint_profile > /tmp/profile.log
-          for f in results/joint_profile/*.csv; do echo "BEGIN $f"; cat "$f"; echo "END $f"; done
+          java -Xmx4g -cp build/classes charmap.JointProfile data/shalla results/java_joint_profile > /tmp/profile.log
+          for f in results/java_joint_profile/*.csv; do echo "BEGIN $f"; cat "$f"; echo "END $f"; done
+      - name: Compare Java to archived C++ results
+        run: python3 scripts/verify_java_parity.py results/java_joint_profile results/joint_profile
       - uses: actions/upload-artifact@v4
         with:
           name: shalla-joint-profile
-          path: results/joint_profile/
+          path: results/java_joint_profile/
           retention-days: 30
