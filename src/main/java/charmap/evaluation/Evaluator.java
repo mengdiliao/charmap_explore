@@ -77,7 +77,7 @@ public final class Evaluator {
         String[] mins=new String[np],maxs=new String[np];long mmmeta=0;
         // Build each unique component once.
         BitmapStatistic[] all=comps.values().toArray(BitmapStatistic[]::new);
-        for(int i=0;i<d.keys.size();i++){String s=d.keys.get(i);int pid=i/P;long h=HashUtils.hash(s);for(BitmapStatistic c:all)c.add(s,h,pid);
+        for(int i=0;i<d.keys.size();i++){String s=d.keys.get(i);int pid=i/P;long h=HashUtils.fnv1a(s);for(BitmapStatistic c:all)c.add(s,h,pid);
             if(mm){String x=prefix(s);if(i%P==0)mins[pid]=maxs[pid]=x;else{if(x.compareTo(mins[pid])<0)mins[pid]=x;if(x.compareTo(maxs[pid])>0)maxs[pid]=x;}}}
         for(BitmapStatistic c:all)JointDiagnostics.collect(c,d,P);
         for(Method m:methods)serialize(m);
@@ -95,7 +95,7 @@ public final class Evaluator {
             if(mm){String x=prefix(s);int n=lower(lo,x,true)-lower(hi,x,false);boolean lp=x.compareTo(mins[np-1])>=0&&x.compareTo(maxs[np-1])<=0;
                 boolean bad=member&&(x.compareTo(mins[pid])<0||x.compareTo(maxs[pid])>0);
                 for(int w=0;w<2;w++){mr[w]+=f[w]*n;mrows[w]+=f[w]*((long)n*P-(lp?P-last:0));if(bad)mf[w]+=f[w];if(!member)mn[w]+=f[w]*n;}}
-            long h=HashUtils.hash(s);for(int i=0;i<all.length;i++)for(int j=0;j<all[i].k;j++)offset[i][j]=all[i].bit(s,h,j)*nw;
+            long h=HashUtils.fnv1a(s);for(int i=0;i<all.length;i++)for(int j=0;j<all[i].k;j++)offset[i][j]=all[i].bit(s,h,j)*nw;
             for(int i=0;i<methods.size();i++){Method method=methods.get(i);int[] indexes=mi[i];long count=0;
                 for(int w=0;w<nw;w++){long v=-1L;outer:for(int id:indexes)for(int off:offset[id]){v&=all[id].post[off+w];if(v==0)break outer;}temp[w]=v;count+=Long.bitCount(v);}
                 boolean bad=member&&(temp[pid/64]&(1L<<(pid%64)))==0;

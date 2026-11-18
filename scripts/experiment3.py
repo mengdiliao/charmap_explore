@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Level 1: prepare, generate/collect independent responses, freeze, evaluate."""
-import argparse, csv, hashlib, ipaddress, json, os, random, re, subprocess, sys
+import argparse, csv, hashlib, ipaddress, json, os, random, re, shutil, subprocess, sys
 from collections import Counter
 from pathlib import Path
 from urllib.request import Request, urlopen
@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REF = (0, 1, -2, -1)
 POSITIONS = list(range(16)) + list(range(-16, 0))
 MODEL = "claude-opus-5-5"
+HASH_VERSION = "fnv1a-mix-v1"
 EXPECTED = {
     "dataset.txt": "081bf7628046d046533f63ed2e049e4aff6bd21d3151b64a41c8cbfc584a4a2a",
     "queries_uniform.txt": "095d4cbd2cc6091bd6a660ad0826c203b00b8d70c364a0eb8319b86d49529fb8",
@@ -89,15 +90,15 @@ Dataset: Shalla, 2,926,705 unique stored string keys from the authors' URL/domai
 
 Representative actual stored strings (selected by structure, not representative of frequency; absent categories are omitted):
 """ + json.dumps(ex,indent=2,ensure_ascii=True)+"""
-Reference: a single Joint Character Map tracks positions [0,1,-2,-1]. A position >=0 is indexed from the start (zero-based); negative positions count from the end (-1 last). Missing positions use symbol 128. Each record is projected into one tuple, encoded in base 257, mixed using the existing fixed 64-bit hash and mapped modulo 4096 to one bit. Insert sets that bit. For a query, an unset bit safely prunes the partition; a set bit retains it. No false negatives permitted. All candidates use this identical algorithm and all 4096 bits for ONE joint map. Do not change hashing, bit mapping, missing handling, budget, partition size, or add Bloom filters/other maps.
+Reference: a single Joint Character Map tracks positions [0,1,-2,-1]. A position >=0 is indexed from the start (zero-based); negative positions count from the end (-1 last). Missing positions use symbol 128. Each record is projected into one ordered character sequence, hashed using the same FNV-1a as the full-string Bloom Filter, mixed once and mapped modulo 4096 to one bit. Insert sets that bit. For a query, an unset bit safely prunes the partition; a set bit retains it. No false negatives permitted. All candidates use this identical algorithm and all 4096 bits for ONE joint map. Do not change hashing, bit mapping, missing handling, budget, partition size, or add Bloom filters/other maps.
 
-Prior full-workload observations at P=8000: the theoretical-k-optimized full-key Bloom baseline pruned 14.19% Uniform and 14.56% Zipfian; reference joint map pruned 14.34% Uniform and 4.60% Zipfian. Aim to improve pruning in both workloads, especially Uniform, by balancing tuple discrimination against saturation. Do not assume these scores apply to new combinations.
+Historical scores from the old hashing implementation are not directly comparable. Aim to improve pruning in both workloads, especially Uniform, by balancing tuple discrimination against saturation.
 
 Return ONLY JSON, an object with a candidates array of exactly 12 unique position combinations, excluding the reference. Exactly 8 candidates must contain 4 positions; the other 4 must contain 2, 3, 5 or 6 positions. Allowed positions are 0..15 and -16..-1; no repeated position within a tuple. Treat order as irrelevant: nonnegative positions ascending, then negative positions ascending. Each candidate has positions (integer array) and reason (one short sentence). Example output shape (one entry only as illustration): {"candidates":[{"positions":[4,5,-3,-2],"reason":"Avoid structural prefix."}]}. Do not include additional fields or markdown. All 12 designs must be decided in this single response without evaluator feedback.
 """
     if args.smoke: prompt = "SYNTHETIC TEST FIXTURE ONLY — NOT A RESEARCH PROMPT\n\n"+prompt
     (out/"prompt.md").write_text(prompt,encoding="utf-8")
-    save(out/"config.json",{"level":1,"model":MODEL,"effort":"high","max_tokens":16000,"partition_size":8 if args.smoke else 8000,"budget":512,"partition_seed":55,"calls":1,"candidates_per_call":12,"random_seeds":[155],"input_sha256":hashes,"prompt_sha256":digest(out/"prompt.md"),"smoke":args.smoke})
+    save(out/"config.json",{"level":1,"hash_version":HASH_VERSION,"model":MODEL,"effort":"high","max_tokens":16000,"partition_size":8 if args.smoke else 8000,"budget":512,"partition_seed":55,"calls":1,"candidates_per_call":12,"random_seeds":[155],"input_sha256":hashes,"prompt_sha256":digest(out/"prompt.md"),"smoke":args.smoke})
     print(out/"prompt.md")
 def config(out):
     c=json.loads((out/"config.json").read_text())
@@ -147,12 +148,15 @@ def evaluate(args):
     if f["config"]!=c or verify(args.data,c["smoke"])!=c["input_sha256"]: raise ValueError("config/data changed")
     for n,h in f["response_sha256"].items():
         if digest(args.out/n)!=h: raise ValueError("response changed after freeze")
+    runtime=args.out/"runtime.json"
+    if (args.out/"benchmark/results.csv").exists() and (not runtime.is_file() or json.loads(runtime.read_text()).get("hash_version")!=HASH_VERSION):
+        raise ValueError("Refusing to overwrite a run from another hashing implementation; use replay with a fresh --out")
     ts=args.out/"designs.tsv";ts.write_text("".join(x["id"]+"\t"+"\t".join(map(str,x["positions"]))+"\n" for x in f["designs"]))
     gradle=[str(ROOT/"gradlew")] if os.name!="nt" else [str(ROOT/"gradlew.bat")]
     sources=sorted((ROOT/"src/main/java/charmap").rglob("*.java"))
     version=subprocess.check_output(gradle+["--version"],cwd=ROOT,text=True)
     build_files=[ROOT/"build.gradle",ROOT/"settings.gradle",ROOT/"gradle/wrapper/gradle-wrapper.properties",ROOT/"gradle/wrapper/gradle-wrapper.jar"]
-    save(args.out/"runtime.json",{"gradle_version_info":version,"platform":sys.platform,"source_sha256":{str(p.relative_to(ROOT)):digest(p) for p in sources},"build_sha256":{str(p.relative_to(ROOT)):digest(p) for p in build_files},"frozen_sha256":digest(args.out/"frozen.json"),"layout":"libstdc++-mt19937_64-paired-shuffle-v1"})
+    save(args.out/"runtime.json",{"hash_version":HASH_VERSION,"gradle_version_info":version,"platform":sys.platform,"source_sha256":{str(p.relative_to(ROOT)):digest(p) for p in sources},"build_sha256":{str(p.relative_to(ROOT)):digest(p) for p in build_files},"frozen_sha256":digest(args.out/"frozen.json"),"layout":"libstdc++-mt19937_64-paired-shuffle-v1"})
     subprocess.run(gradle+["--console=plain","positionEvaluator","-PdataDir="+str(args.data.resolve()),"-PoutputDir="+str((args.out/"benchmark").resolve()),"-PpartitionSize="+str(c["partition_size"]),"-Pbudget="+str(c["budget"]),"-Pcandidates="+str(ts.resolve()),"-Pseed="+str(c["partition_seed"])],cwd=ROOT,check=True)
     report(args)
 def report(args):
@@ -168,16 +172,66 @@ def report(args):
     with (p/"proposal_results.csv").open("w",newline="") as out:
         writer=csv.DictWriter(out,fieldnames=list(proposals[0]));writer.writeheader();writer.writerows(proposals)
     import statistics
-    lines=["# Experiment 3 — Level 1 results","",("SYNTHETIC SMOKE TEST ONLY" if f["config"]["smoke"] else "Full Shalla workload."),f"Unique joint maps: {len(f['designs'])}; proposal count: {len(f['proposals'])}.","", "| Workload | Group | Call | N | Best % | Median % | Mean % | Above Bloom |","|---|---|---:|---:|---:|---:|---:|---:|"]
+    lines=["# Experiment 3 — Level 1 results","",f"Hash version: {HASH_VERSION}.",("SYNTHETIC SMOKE TEST ONLY" if f["config"]["smoke"] else "Full Shalla workload."),f"Unique joint maps: {len(f['designs'])}; proposal count: {len(f['proposals'])}.","", "| Workload | Group | Call | N | Best % | Median % | Mean % | Above Bloom |","|---|---|---:|---:|---:|---:|---:|---:|"]
     for w in ("uniform","zipf"):
         for group in ("AI","Random"):
             for call in range(1,f["config"]["calls"]+1):
                 a=[r for r in proposals if r["workload"]==w and r["group"]==group and (call=="all" or r["call"]==call)]
                 v=[float(r["pruning_pct"]) for r in a];lines.append(f"| {w} | {group} | {call} | {len(v)} | {max(v):.4f} | {statistics.median(v):.4f} | {statistics.mean(v):.4f} | {sum(r['delta_bloom_pp']>0 for r in a)} |")
         lines.extend(["",f"{w}: Bloom {float(by[w,'OptimizedBloom']['pruning_pct']):.4f}%, reference {float(by[w,'ReferenceJointCM']['pruning_pct']):.4f}%.",""])
+    if (p/"replay.json").exists(): lines.extend(["","Replayed the original frozen AI and Random designs; no new AI calls. Original prompt is preserved for provenance."])
     lines.extend(["","Full workload exploration, no held-out test. Best is selected post hoc, not independently validated. All repeated proposals retained in proposal_results.csv."])
     (p/"report.md").write_text("\n".join(lines)+"\n")
     print((p/"report.md").read_text())
+def replay(args):
+    """Copy only frozen inputs; never regenerate candidates or overwrite a previous run."""
+    if args.from_run is None:
+        raise ValueError("replay requires --from-run pointing to the original Experiment 3 run")
+    src=args.from_run.resolve()
+    dst=args.out.resolve()
+    if src==dst or src in dst.parents or dst in src.parents:
+        raise ValueError("Use separate source and output directories")
+    c=config(src);f=json.loads((src/"frozen.json").read_text())
+    if f["config"]!=c or verify(args.data,c["smoke"])!=c["input_sha256"]:
+        raise ValueError("original frozen config/data changed")
+    for n,h in f["response_sha256"].items():
+        if digest(src/n)!=h: raise ValueError("original AI response changed after freeze")
+    if dst.exists() and any(dst.iterdir()):
+        raise ValueError("replay output already exists; use a fresh --out")
+    dst.mkdir(parents=True,exist_ok=True)
+    files=["config.json","prompt.md","frozen.json",*f["response_sha256"]]
+    for n in ["examples.json",*[f"api_raw_{i}.json" for i in range(1,c["calls"]+1)]]:
+        if (src/n).is_file(): files.append(n)
+    for n in files: shutil.copy2(src/n,dst/n)
+    legacy=src/"benchmark/results.csv"
+    if legacy.is_file(): shutil.copy2(legacy,dst/"legacy_results.csv")
+    old_runtime=src/"runtime.json"
+    if old_runtime.is_file(): shutil.copy2(old_runtime,dst/"legacy_runtime.json")
+    save(dst/"replay.json",{"source_run":str(src),"frozen_sha256":digest(src/"frozen.json"),"hash_version":HASH_VERSION,"source_hash_version":json.loads(old_runtime.read_text()).get("hash_version","legacy") if old_runtime.is_file() else "unknown","copied_sha256":{n:digest(dst/n) for n in files},"legacy_results_sha256":digest(dst/"legacy_results.csv") if legacy.is_file() else None})
+    evaluate(args)
+    if legacy.is_file():
+        compare_hashes(dst)
+def compare_hashes(p):
+    def load(path):
+        with path.open() as f: rows=list(csv.DictReader(f))
+        result={(r["workload"],r["algorithm"]):r for r in rows}
+        if len(result)!=len(rows): raise ValueError("duplicate result rows")
+        return result
+    old=load(p/"legacy_results.csv");new=load(p/"benchmark/results.csv")
+    if old.keys()!=new.keys(): raise ValueError("legacy and unified result methods differ")
+    frozen=json.loads((p/"frozen.json").read_text())
+    designs={x["id"]:";".join(map(str,x["positions"])) for x in frozen["designs"]}
+    stable=("partition_size","budget_bytes","partitions","dataset_rows","queries","global_positive","global_negative","query_partition_pairs","oracle_retained","payload_used_bytes","nominal_bpk","positions","mean_token_ndv","exact_joint_pruning_pct","bloom_k")
+    rows=[]
+    for (w,n),b in new.items():
+        a=old[w,n]
+        for k in stable:
+            if k in a and k in b and a[k]!=b[k]: raise ValueError(f"invariant differs: {w}/{n}/{k}")
+        if int(a["false_negatives"]) or int(b["false_negatives"]): raise ValueError("false negative in comparison")
+        rows.append({"workload":w,"algorithm":n,"positions":designs.get(n,""),"legacy_pruning_pct":a["pruning_pct"],"unified_pruning_pct":b["pruning_pct"],"delta_pruning_pp":float(b["pruning_pct"])-float(a["pruning_pct"]),"legacy_metadata_bytes":a["metadata_total_bytes"],"unified_metadata_bytes":b["metadata_total_bytes"],"legacy_false_negatives":a["false_negatives"],"unified_false_negatives":b["false_negatives"]})
+    with (p/"hash_comparison.csv").open("w",newline="") as f:
+        writer=csv.DictWriter(f,fieldnames=list(rows[0]));writer.writeheader();writer.writerows(rows)
+    print("Paired hash comparison:",p/"hash_comparison.csv")
 def main():
-    a=argparse.ArgumentParser();a.add_argument("command",choices=["prepare","generate","freeze","evaluate","report"]);a.add_argument("--data",type=Path,default=ROOT/"data/shalla");a.add_argument("--out",type=Path,default=ROOT/"runs/experiment3_level1");a.add_argument("--call",type=int,choices=[1]);a.add_argument("--smoke",action="store_true",help="test fixture only, never research results");args=a.parse_args();globals()[args.command](args)
+    a=argparse.ArgumentParser();a.add_argument("command",choices=["prepare","generate","freeze","evaluate","report","replay"]);a.add_argument("--data",type=Path,default=ROOT/"data/shalla");a.add_argument("--out",type=Path,default=ROOT/"runs/experiment3_unified_hashing");a.add_argument("--from-run",type=Path,help="original frozen run for replay");a.add_argument("--call",type=int,choices=[1]);a.add_argument("--smoke",action="store_true",help="test fixture only, never research results");args=a.parse_args();globals()[args.command](args)
 if __name__=="__main__":main()

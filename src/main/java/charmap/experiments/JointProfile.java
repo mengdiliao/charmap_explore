@@ -10,7 +10,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
-/** Same full-workload joint projection diagnostic and CSV schema as legacy C++. */
+/** Full-workload joint projection diagnostics using unified hashing. */
 public final class JointProfile {
     static final String[] SOURCES={"dataset","uniform","zipf"};
     static long token(String s,boolean four){return four?CharacterEncoding.token(s,CharacterEncoding.REF):CharacterEncoding.pair(s,0,-1);}
@@ -21,17 +21,18 @@ public final class JointProfile {
         for(int c:a){if(c==128)b.append("<MISSING>");else if(c>=32&&c<127&&c!=','&&c!='\\'&&c!='"')b.append((char)c);else b.append(String.format(Locale.ROOT,"\\x%02x",c));}
         return b.toString();
     }
+    static long tokenHash(long id,boolean four){return HashUtils.fnv1a(CharacterEncoding.decodeToken(id,four?4:2,four?257:256));}
     static int quantile(int[] a,double p){int[] b=a.clone();Arrays.sort(b);return b[(int)Math.ceil(p*b.length)-1];}
     static final class Config {
         final int bytes,m;final long[] uniform,zipf;final BitSet global;
         long occ,loss,ur,zr;final int[] occupied;
-        Config(int b,int np,Map<Long,long[]> table){
+        Config(int b,int np,Map<Long,long[]> table,boolean four){
             bytes=b;m=b*8;uniform=new long[m];zipf=new long[m];global=new BitSet(m);occupied=new int[np];
-            for(var e:table.entrySet()){int i=HashUtils.bucket(HashUtils.mix(e.getKey()),m);long[] f=e.getValue();if(f[0]>0)global.set(i);uniform[i]+=f[1];zipf[i]+=f[2];}
+            for(var e:table.entrySet()){int i=HashUtils.hashToBit(tokenHash(e.getKey(),four),0,m);long[] f=e.getValue();if(f[0]>0)global.set(i);uniform[i]+=f[1];zipf[i]+=f[2];}
         }
         void add(long[] hash,int n,int pid){
             BitSet b=new BitSet(m);int k=0;
-            for(int j=0;j<n;j++){int i=HashUtils.bucket(hash[j],m);if(b.get(i))continue;b.set(i);k++;ur+=uniform[i];zr+=zipf[i];}
+            for(int j=0;j<n;j++){int i=HashUtils.hashToBit(hash[j],0,m);if(b.get(i))continue;b.set(i);k++;ur+=uniform[i];zr+=zipf[i];}
             occ+=k;loss+=n-k;occupied[pid]=k;
         }
     }
@@ -63,11 +64,11 @@ public final class JointProfile {
                 for(int P:new int[]{500,2000,8000,32000,128000}){
                     int np=(tokens.length+P-1)/P;
                     TreeSet<Integer> budgets=new TreeSet<>(List.of(16,32,64,128,256));for(int x:new int[]{32,64,128,256}){budgets.add(x*P/500);budgets.add(Math.max(16,x*P/500/8));}
-                    ArrayList<Config> cs=new ArrayList<>();for(int size:budgets)cs.add(new Config(size,np,table));
+                    ArrayList<Config> cs=new ArrayList<>();for(int size:budgets)cs.add(new Config(size,np,table,four));
                     int[] ndvs=new int[np];long ndvsum=0,eu=0,ez=0;long[] block=new long[P],hashed=new long[P];
                     for(int pid=0;pid<np;pid++){
                         int start=pid*P,n=Math.min(P,tokens.length-start);System.arraycopy(tokens,start,block,0,n);Arrays.sort(block,0,n);
-                        int k=0;for(int i=0;i<n;i++)if(i==0||block[i]!=block[i-1]){long id=block[i];long[] f=table.get(id);eu+=f[1];ez+=f[2];hashed[k++]=HashUtils.mix(id);}
+                        int k=0;for(int i=0;i<n;i++)if(i==0||block[i]!=block[i-1]){long id=block[i];long[] f=table.get(id);eu+=f[1];ez+=f[2];hashed[k++]=tokenHash(id,four);}
                         ndvs[pid]=k;ndvsum+=k;for(Config c:cs)c.add(hashed,k,pid);
                     }
                     long up=tot[1]*np,zp=tot[2]*np;double ex1=100.0*(1-(double)eu/up),ex2=100.0*(1-(double)ez/zp);

@@ -5,6 +5,7 @@ import charmap.encoding.CharacterEncoding;
 import charmap.hashing.HashUtils;
 import charmap.evaluation.Evaluator;
 import charmap.statistics.BloomFilter;
+import charmap.statistics.JointCharacterMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 import java.nio.file.*;
@@ -25,11 +26,38 @@ class CorrectnessTest {
         assertEquals(1,BloomFilter.optimalK(8000,512));
         assertEquals(3,BloomFilter.optimalK(500,256));
     }
-    @Test void unsignedBucketAndHash() {
-        assertEquals(5,HashUtils.bucket(-1L,10));
-        assertEquals(0,HashUtils.bucket(0L,4096));
-        assertEquals(0,HashUtils.mix(0L));
-        assertEquals(HashUtils.hash("abc"),HashUtils.hash(new String("abc")));
+    @Test void unifiedHashKnownVectors() {
+        assertEquals(0xcbf29ce484222325L,HashUtils.fnv1a(""));
+        assertEquals(0xe71fa2190541574bL,HashUtils.fnv1a("abc"));
+        assertEquals(0L,HashUtils.mix(0L));
+        assertEquals((int)Long.remainderUnsigned(HashUtils.mix(HashUtils.fnv1a("abc")),4096),
+                     HashUtils.hashToBit(HashUtils.fnv1a("abc"),0,4096));
+        assertEquals((int)Long.remainderUnsigned(HashUtils.mix(HashUtils.fnv1a("abc")+0x9e3779b97f4a7c15L),1000),
+                     HashUtils.hashToBit(HashUtils.fnv1a("abc"),1,1000));
+        for(int i=0;i<16;i++){
+            int bit=HashUtils.hashToBit(HashUtils.fnv1a("abc"),i,1000);
+            assertTrue(bit>=0&&bit<1000);
+        }
+    }
+    @Test void identicalProjectedAndFullInputMapping() {
+        for(String key:List.of("www.example.com","a","","ab","a\0b","abc.def")){
+            for(int[] pos:List.of(new int[]{0,1,-2,-1},new int[]{0,15},new int[]{0,1,2,-3,-2,-1})){
+                var joint=new JointCharacterMap("joint","joint",512,0,0,1,pos);
+                var bloom=new BloomFilter("bloom",512,1,1);
+                String token=CharacterEncoding.extractCharacters(key,pos);
+                assertEquals(token,CharacterEncoding.decodeToken(CharacterEncoding.token(key,pos),pos.length,257));
+                assertEquals(HashUtils.fnv1a(token),joint.projectedHash(key));
+                assertEquals(bloom.bit(token,HashUtils.fnv1a(token),0),joint.bit(key,HashUtils.fnv1a(key),0));
+                assertTrue(joint.schema().contains(HashUtils.VERSION));
+                assertTrue(bloom.schema().contains(HashUtils.VERSION));
+            }
+            var pair=new JointCharacterMap("pair","pair",16,0,-1,1,null);
+            String token=CharacterEncoding.extractCharacters(key,new int[]{0,-1});
+            assertEquals(token,CharacterEncoding.decodeToken(CharacterEncoding.pair(key,0,-1),2,256));
+            assertEquals(HashUtils.hashToBit(HashUtils.fnv1a(token),0,128),pair.bit(key,0,0));
+        }
+        assertEquals("\u0080",CharacterEncoding.extractCharacters("",new int[]{0}));
+        assertNotEquals(CharacterEncoding.extractCharacters("",new int[]{0}),CharacterEncoding.extractCharacters("\0",new int[]{0}));
     }
     @Test void legacyShuffle() {
         var a=new ArrayList<>(List.of("0","1","2","3","4","5","6"));

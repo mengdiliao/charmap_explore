@@ -50,15 +50,15 @@ def budget = { prop('budget', '512') }
 
 experiment('shallaPilot', 'ShallaPilot', {
     def b = prop('budget', '256')
-    [data(), prop('outputDir', 'results/java_pilot_' + b), b]
+    [data(), prop('outputDir', 'results/java_unified_pilot_' + b), b]
 }, 'Run Experiment 1 full Shalla baseline pilot (P=500).')
 experiment('partitionSensitivity', 'PartitionSensitivity', {
-    [data(), prop('outputDir', 'results/java_p' + p() + '_b' + budget()), p(), budget()]
+    [data(), prop('outputDir', 'results/java_unified_p' + p() + '_b' + budget()), p(), budget()]
 }, 'Run one Experiment 2 partition-size/budget combination.')
 experiment('jointProfile', 'JointProfile', {
-    [data(), prop('outputDir', 'results/java_joint_profile')]
+    [data(), prop('outputDir', 'results/java_unified_joint_profile')]
 }, 'Profile both joint tuples across the full partition/budget matrix.')
 experiment('positionEvaluator', 'PositionEvaluator', {
-    [data(), prop('outputDir', 'runs/experiment3_level1/benchmark'), p(), budget(),
-     prop('candidates', 'runs/experiment3_level1/designs.tsv'), prop('seed', '55')]
+    [data(), prop('outputDir', 'runs/experiment3_unified_hashing/benchmark'), p(), budget(),
+     prop('candidates', 'runs/experiment3_unified_hashing/designs.tsv'), prop('seed', '55')]
 }, 'Evaluate frozen AI/random position combinations, Bloom, and Oracle (Experiment 3).')

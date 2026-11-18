@@ -17,3 +17,7 @@ Use JDK 21 and the committed Gradle Wrapper (`./gradlew build`, `./gradlew test`
 - `experiments/`: the four existing experiment entry points.
 
 The Gradle task names, data paths, hash algorithms, partition layout, metadata format, and experiment parameters remain unchanged. See [code organization](docs/code-organization.md).
+
+## Unified hashing experiment
+
+This branch compares full-key Bloom and projected-key Joint Character Map with the same FNV-1a + one mixing step + unsigned modulo. See [unified hashing replay](docs/unified-hashing.md). Reuse an existing frozen Level 1 run with `python3 scripts/experiment3.py replay --from-run runs/experiment3_level1 --out runs/experiment3_unified_hashing`. No API call or new random sample is needed. Historical artifacts and CSVs remain unchanged; do not mix legacy and unified measurements.
