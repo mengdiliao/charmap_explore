@@ -31,7 +31,7 @@ At https://claude.ai/ start one new chat, select Opus 5.5 if available, turn on 
     python3 scripts/experiment3.py freeze
     python3 scripts/experiment3.py evaluate
 
-Both workloads evaluated in one run. No API used in freeze/evaluate. Python validates combinations, fixes tuple order, generates seeded controls, writes frozen.json before benchmark. To repeat use another --out path on every command. Java uses a pinned port of the original libstdc++ mt19937_64 shuffle instead of Collections.shuffle, ensuring a platform-independent layout subject to the archived-result parity gate. Set JAVA_HEAP (default 4g) if needed. C++ files remain legacy references. Memory and run time depend on machine; no production latency claims.
+Both workloads evaluated in one run. No API used in freeze/evaluate. Python validates combinations, fixes tuple order, generates seeded controls, writes frozen.json before benchmark. To repeat use another --out path on every command. Java uses a pinned port of the original libstdc++ mt19937_64 shuffle instead of Collections.shuffle, ensuring a platform-independent layout subject to the archived-result parity gate. Set JAVA_HEAP (default 4g) if needed. The retired C++ implementation is available in Git history at commit b948c10b57aa84857d0ba9a00d9f66ea1742fc5b; it is no longer present in the main working tree. Memory and run time depend on machine; no production latency claims.
 
 Output under runs/experiment3_level1 (gitignored):
 - prompt.md, config.json, examples.json, response_N.json, api_raw_N.json, frozen.json
