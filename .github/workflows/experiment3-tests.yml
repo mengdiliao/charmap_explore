@@ -1,0 +1,89 @@
+name: Experiment 3 Level 1 verification
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'experiments/position_evaluator.cpp'
+      - 'scripts/experiment3.py'
+      - '.github/workflows/experiment3-tests.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Synthetic end-to-end test (not AI or research results)
+        run: |
+          mkdir -p /tmp/smoke
+          python3 - <<'PY'
+          from pathlib import Path
+          import random
+          p=Path('/tmp/smoke')
+          keys=[f'www.sample{i}.com' for i in range(31)]+['x','ab','', '192.0.2.1']
+          (p/'dataset.txt').write_text('\n'.join(keys)+'\n')
+          (p/'queries_uniform.txt').write_text('\n'.join(keys+['other.net']*5)+'\n')
+          (p/'queries_zipf.txt').write_text('\n'.join(keys+['x']*30+['zz']*7)+'\n')
+          PY
+          python3 scripts/experiment3.py prepare --data /tmp/smoke --out /tmp/test --smoke
+          python3 - <<'PY'
+          import json,random
+          from pathlib import Path
+          for i in range(1,4):
+              rng=random.Random(i)
+              seen={(0,1,-2,-1)}; a=[]
+              for k in [4]*8+[2,3,5,6]:
+                  while True:
+                      p=rng.sample(list(range(16))+list(range(-16,0)),k)
+                      t=tuple(sorted(x for x in p if x>=0)+sorted(x for x in p if x<0))
+                      if t not in seen:
+                          seen.add(t);break
+                  a.append({'positions':p,'reason':'synthetic fixture only'})
+              Path(f'/tmp/test/response_{i}.json').write_text(json.dumps({'candidates':a}))
+          PY
+          python3 scripts/experiment3.py freeze --out /tmp/test
+          python3 scripts/experiment3.py evaluate --data /tmp/smoke --out /tmp/test
+          python3 - <<'PY'
+          import csv
+          rows=list(csv.DictReader(open('/tmp/test/proposal_results.csv')))
+          assert len(rows)==144
+          assert all(int(r['false_negatives'])==0 for r in rows)
+          assert all(None not in r for r in rows)
+          PY
+  full-reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: shalla-dataset-and-official-workloads
+          run-id: 44195004791
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: .
+      - name: Prepare real prompt and verify reference
+        run: |
+          python3 scripts/experiment3.py prepare --out /tmp/real
+          cat /tmp/real/examples.json
+          printf 'ReferenceJointCM\t0\t1\t-2\t-1\n' >/tmp/reference.tsv
+          g++ -std=c++17 -O3 experiments/position_evaluator.cpp -o /tmp/eval
+          /tmp/eval data/shalla /tmp/ref 8000 512 /tmp/reference.tsv 55
+          python3 - <<'PY'
+          import csv
+          a={(r['workload'],r['algorithm']):r for r in csv.DictReader(open('/tmp/ref/results.csv'))}
+          old={(r['workload'],r['algorithm']):r for r in csv.DictReader(open('results/shalla_partition_sensitivity.csv')) if r['partition_size']=='8000' and r['budget_bytes']=='512'}
+          for w in ('uniform','zipf'):
+              for n,prev in [('ReferenceJointCM','JointCharacterMap'),('OptimizedBloom','OptimizedBloom'),('Oracle','Oracle')]:
+                  assert a[w,n]['retained']==old[w,prev]['retained'],(w,n,a[w,n],old[w,prev])
+                  assert a[w,n]['false_negatives']=='0'
+          print('Exact reference parity with Experiment 2 passed')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: level1-reference-verification
+          path: |
+            /tmp/real/prompt.md
+            /tmp/real/examples.json
+            /tmp/ref/results.csv
