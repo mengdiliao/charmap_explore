@@ -1,4 +1,4 @@
-package charmap.core;
+package charmap.hashing;
 
 public final class HashUtils {
     public static long mix(long x) {

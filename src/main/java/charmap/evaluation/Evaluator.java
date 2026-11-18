@@ -1,5 +1,9 @@
 package charmap.evaluation;
-import charmap.core.*;
+import charmap.hashing.HashUtils;
+import charmap.encoding.CharacterEncoding;
+import charmap.data.LoadedData;
+import charmap.data.PartitionLayout;
+import charmap.serialization.MetadataSerializer;
 import charmap.statistics.*;
 
 import java.io.*;
@@ -9,7 +13,7 @@ import java.util.*;
 
 /** Identical legacy statistic definitions, common construction and weighted evaluation. */
 public final class Evaluator {
-    final Dataset d;final int P,B,np,nw,last;final Path out;final String mode;
+    final LoadedData d;final int P,B,np,nw,last;final Path out;final String mode;
     final LinkedHashMap<String,BitmapStatistic> comps=new LinkedHashMap<>();
     final ArrayList<Method> methods=new ArrayList<>();
     static final class Method{
@@ -17,10 +21,10 @@ public final class Evaluator {
         Method(String n,BitmapStatistic... cs){name=n;this.cs=cs;}
         String desc(){return String.join(";",Arrays.stream(cs).map(c->c.name).toList());}
     }
-    public Evaluator(Dataset d,int P,int B,Path out,String mode){
+    public Evaluator(LoadedData d,int P,int B,Path out,String mode){
         this.d=d;this.P=P;this.B=B;this.out=out;this.mode=mode;
         if(P<1||B<32||B%8!=0)throw new IllegalArgumentException("Invalid P/B");
-        np=(d.keys.size()+P-1)/P;nw=(np+63)/64;last=d.keys.size()-(np-1)*P;d.partition(P);
+        np=(d.keys.size()+P-1)/P;nw=(np+63)/64;last=d.keys.size()-(np-1)*P;PartitionLayout.partition(d,P);
     }
     BitmapStatistic add(String n,String kind,int b,int p,int q,int k,int[] positions){
         return comps.computeIfAbsent(n,x->switch(kind){
@@ -86,7 +90,7 @@ public final class Evaluator {
         int[][] mi=new int[methods.size()][];for(int i=0;i<mi.length;i++)mi[i]=Arrays.stream(methods.get(i).cs).mapToInt(ci::get).toArray();
         long[] temp=new long[nw];
         for(var entry:d.records.entrySet()){
-            String s=entry.getKey();Dataset.Record rec=entry.getValue();long[] f=rec.freq;if(f[0]==0&&f[1]==0)continue;int pid=rec.pid;boolean member=pid>=0;
+            String s=entry.getKey();LoadedData.Record rec=entry.getValue();long[] f=rec.freq;if(f[0]==0&&f[1]==0)continue;int pid=rec.pid;boolean member=pid>=0;
             if(member)for(int w=0;w<2;w++)orows[w]+=f[w]*(pid==np-1?last:P);
             if(mm){String x=prefix(s);int n=lower(lo,x,true)-lower(hi,x,false);boolean lp=x.compareTo(mins[np-1])>=0&&x.compareTo(maxs[np-1])<=0;
                 boolean bad=member&&(x.compareTo(mins[pid])<0||x.compareTo(maxs[pid])>0);
@@ -114,7 +118,7 @@ public final class Evaluator {
     void emit(PrintWriter csv,int w,String name,long ret,long fn,long negret,long meta,long used,long rows,String desc,Method m){
         long q=d.queries[w],oracle=d.positive[w],pairs=q*np,neg=q-oracle;int n=d.keys.size();
         if(fn!=0||ret<oracle)throw new IllegalStateException("False negative "+name);
-        String s=ResultWriter.csv(Dataset.WORK[w],name,mode.equals("pilot")&&name.equals("Oracle")?0:B,P,np,n,n,0,q,oracle,neg,pairs,oracle,ret,ret-oracle,fn,ResultWriter.pct(pairs-ret,pairs),ResultWriter.pct(neg*np-negret,neg*np),meta,8.0*meta/n);
+        String s=ResultWriter.csv(LoadedData.WORK[w],name,mode.equals("pilot")&&name.equals("Oracle")?0:B,P,np,n,n,0,q,oracle,neg,pairs,oracle,ret,ret-oracle,fn,ResultWriter.pct(pairs-ret,pairs),ResultWriter.pct(neg*np-negret,neg*np),meta,8.0*meta/n);
         if(!mode.equals("pilot"))s+=","+ResultWriter.csv(used,8.0*B/P,ResultWriter.pct(ret-oracle,pairs-oracle),ResultWriter.pct(pairs-ret,pairs-oracle),ResultWriter.pct(rows,q*n));
         s+=","+desc;
         if(mode.equals("position")){

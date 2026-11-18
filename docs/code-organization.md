@@ -6,7 +6,7 @@ This refactor separates existing code, rather than adding or tuning a statistic.
 
 - HashUtils preserves FNV-1a and both original mixing stages for Bloom; CharacterEncoding preserves base-257 tuples, legacy base-256 pairs and MISSING=128.
 - BitmapStatistic preserves transposed postings and the exact method/component schema strings. The four subclasses only specialize the bit mapping. Hybrid methods still compose components. The truncated MinMax implementation remains in Evaluator for historical compatibility.
-- Dataset and PartitionLayout preserve the pinned MT19937-64 shuffle and query multiplicities. MetadataSerializer preserves CMP1 bytes and shared schema accounting.
+- DatasetLoader reads the existing dataset.txt and query workload files. LoadedData is an in-memory representation of keys, query frequencies and partition membership, with no file I/O. PartitionLayout preserves the pinned MT19937-64 shuffle and partition assignments. The old core package has been removed in favor of hashing, encoding, data and serialization. MetadataSerializer preserves CMP1 bytes and shared schema accounting.
 - JointDiagnostics preserves the original NDV, occupancy and exact projection metrics. ResultWriter preserves CSV formatting. Experiment class names move into experiments; Gradle task names and CLI arguments stay the same.
 - Experiment 3 now recursively hashes Java sources and records repo-relative paths, so runtime provenance still covers every Java file after package moves. The experiment's prompt, candidates, workload and scoring are unchanged.
 

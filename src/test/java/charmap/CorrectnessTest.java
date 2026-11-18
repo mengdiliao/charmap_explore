@@ -1,5 +1,8 @@
 package charmap;
-import charmap.core.*;
+import charmap.data.DatasetLoader;
+import charmap.data.PartitionLayout;
+import charmap.encoding.CharacterEncoding;
+import charmap.hashing.HashUtils;
 import charmap.evaluation.Evaluator;
 import charmap.statistics.BloomFilter;
 
@@ -36,6 +39,21 @@ class CorrectnessTest {
         PartitionLayout.shuffle(b,55);
         assertEquals(List.of("2","5","4","6","1","3","7","0"),b);
     }
+    @Test void preparedFilesAndQueryMultiplicity(@TempDir Path dir)throws Exception {
+        Files.writeString(dir.resolve("dataset.txt"),"abc\nxyz\n");
+        Files.writeString(dir.resolve("queries_uniform.txt"),"abc\nabc\nabsent\n");
+        Files.writeString(dir.resolve("queries_zipf.txt"),"xyz\nxyz\nxyz\nabsent\n");
+        var data=DatasetLoader.load(dir,55);
+        assertEquals(2,data.keys.size());
+        assertEquals(3,data.records.size());
+        assertArrayEquals(new long[]{3,4},data.queries);
+        assertArrayEquals(new long[]{2,0},data.records.get("abc").freq);
+        assertArrayEquals(new long[]{0,3},data.records.get("xyz").freq);
+        assertEquals(-1,data.records.get("absent").pid);
+        PartitionLayout.partition(data,1);
+        assertArrayEquals(new long[]{2,3},data.positive);
+        assertEquals(-1,data.records.get("absent").pid);
+    }
     @Test void membersNeverPrunedAndQueriesWeighted(@TempDir Path dir)throws Exception {
         // Synthetic correctness fixture, deliberately includes empty keys,
         // short strings, repeated queries and a partial final partition.
@@ -45,7 +63,7 @@ class CorrectnessTest {
         Path candidates=dir.resolve("designs.tsv");
         Files.writeString(candidates,"ReferenceJointCM\t0\t1\t-2\t-1\nShortTuple\t0\t15\n");
         Path out=dir.resolve("out");
-        new Evaluator(new Dataset(dir,55),2,32,out,"position").run(candidates);
+        new Evaluator(DatasetLoader.load(dir,55),2,32,out,"position").run(candidates);
         List<String> lines=Files.readAllLines(out.resolve("results.csv"));
         assertEquals(9,lines.size()); // 4 algorithms x 2 workloads + header
         String[] header=lines.get(0).split(",",-1);

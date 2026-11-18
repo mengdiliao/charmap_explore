@@ -1,4 +1,4 @@
-package charmap.core;
+package charmap.data;
 import java.util.*;
 public final class PartitionLayout {
     static final class MT64 {
@@ -30,9 +30,9 @@ public final class PartitionLayout {
         while(i<n){long b=i+1L;long x=rng.below(b*(b+1));Collections.swap(a,i,(int)(x/(b+1)));i++;
             Collections.swap(a,i,(int)(x%(b+1)));i++;}
     }
-    public static void partition(Dataset data,int P){
+    public static void partition(LoadedData data,int P){
             Arrays.fill(data.positive,0);
-            for(int i=0;i<data.keys.size();i++){Dataset.Record r=data.records.get(data.keys.get(i));r.pid=i/P;for(int w=0;w<2;w++)data.positive[w]+=r.freq[w];}
+            for(int i=0;i<data.keys.size();i++){LoadedData.Record r=data.records.get(data.keys.get(i));r.pid=i/P;for(int w=0;w<2;w++)data.positive[w]+=r.freq[w];}
         }
 
 }

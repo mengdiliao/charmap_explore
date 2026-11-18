@@ -1,4 +1,4 @@
-package charmap.core;
+package charmap.encoding;
 
 public final class CharacterEncoding {
     public static final int[] REF={0,1,-2,-1};

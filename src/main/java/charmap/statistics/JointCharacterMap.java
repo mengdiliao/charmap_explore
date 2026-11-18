@@ -1,6 +1,6 @@
 package charmap.statistics;
-import charmap.core.CharacterEncoding;
-import charmap.core.HashUtils;
+import charmap.encoding.CharacterEncoding;
+import charmap.hashing.HashUtils;
 /** Preserve distinct legacy pair and general tuple encodings. */
 public final class JointCharacterMap extends BitmapStatistic {
     public JointCharacterMap(String name,String kind,int bytes,int p,int q,int nw,int[] positions){super(name,kind,bytes,p,q,1,nw,positions);}

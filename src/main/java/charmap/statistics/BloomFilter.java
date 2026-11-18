@@ -1,5 +1,5 @@
 package charmap.statistics;
-import charmap.core.HashUtils;
+import charmap.hashing.HashUtils;
 public final class BloomFilter extends BitmapStatistic {
     public BloomFilter(String name,int bytes,int k,int nw){super(name,"bloom",bytes,0,0,k,nw,null);}
     public static int optimalK(int P,int B){

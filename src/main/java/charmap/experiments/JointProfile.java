@@ -1,5 +1,9 @@
 package charmap.experiments;
-import charmap.core.*;
+import charmap.hashing.HashUtils;
+import charmap.encoding.CharacterEncoding;
+import charmap.data.LoadedData;
+import charmap.data.DatasetLoader;
+import charmap.data.PartitionLayout;
 import charmap.evaluation.*;
 
 import java.io.*;
@@ -33,18 +37,18 @@ public final class JointProfile {
     }
     public static void main(String[] args)throws Exception{
         if(args.length!=2)throw new IllegalArgumentException("data_dir output_dir");
-        Dataset d=new Dataset(Path.of(args[0]),55);Path out=Path.of(args[1]);Files.createDirectories(out);
+        LoadedData d=DatasetLoader.load(Path.of(args[0]),55);Path out=Path.of(args[1]);Files.createDirectories(out);
         if(d.keys.size()!=2926705||d.queries[0]!=10000000||d.queries[1]!=10000000)throw new IOException("wrong input counts");
         try(var g=ResultWriter.writer(out.resolve("global.csv"));var t=ResultWriter.writer(out.resolve("top_tokens.csv"));var p=ResultWriter.writer(out.resolve("partitions.csv"));var b=ResultWriter.writer(out.resolve("bitmaps.csv"))){
             g.println("tuple,source,rows,ndv,missing_rows,unseen_dataset_ndv,unseen_dataset_rows,top1_pct,top10_pct");
             t.println("tuple,source,rank,token,frequency,share_pct,dataset_frequency,uniform_frequency,zipf_frequency");
             p.println("tuple,partition_size,partitions,ndv_min,ndv_mean,ndv_median,ndv_p95,ndv_max,uniform_exact_pruning_pct,zipf_exact_pruning_pct");
             b.println("tuple,partition_size,partitions,budget_bytes,nominal_bpk,global_dataset_ndv,global_occupied_bits,global_collision_excess_pct,mean_occupied_bits,median_occupied_bits,p95_occupied_bits,mean_saturation_pct,partition_collision_excess_pct,uniform_hash_pruning_pct,zipf_hash_pruning_pct,uniform_collision_loss_pp,zipf_collision_loss_pp");
-            d.partition(d.keys.size());
+            PartitionLayout.partition(d,d.keys.size());
             for(boolean four:new boolean[]{false,true}){
                 String label=four?"four":"pair";HashMap<Long,long[]> table=new HashMap<>();long[] missing=new long[3],tot={d.keys.size(),d.queries[0],d.queries[1]};
                 for(var e:d.records.entrySet()){
-                    String s=e.getKey();Dataset.Record rec=e.getValue();long[] f=table.computeIfAbsent(token(s,four),x->new long[3]);
+                    String s=e.getKey();LoadedData.Record rec=e.getValue();long[] f=table.computeIfAbsent(token(s,four),x->new long[3]);
                     long[] a={rec.pid>=0?1:0,rec.freq[0],rec.freq[1]};
                     for(int j=0;j<3;j++){f[j]+=a[j];if(s.length()<(four?2:1))missing[j]+=a[j];}
                 }

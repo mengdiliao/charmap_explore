@@ -1,4 +1,4 @@
-package charmap.core;
+package charmap.serialization;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
