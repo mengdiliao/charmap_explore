@@ -3,3 +3,7 @@
 /build/
 __pycache__/
 *.part
+
+/runs/
+.env
+.env.*
