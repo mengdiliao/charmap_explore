@@ -4,7 +4,11 @@ on:
   push:
     branches: [main]
     paths:
-      - 'src/charmap/**'
+      - 'src/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradlew*'
+      - 'gradle/**'
       - 'scripts/experiment3.py'
       - '.github/workflows/experiment3-tests.yml'
 permissions:
@@ -19,6 +23,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: JUnit correctness tests
+        run: ./gradlew --no-daemon --console=plain test
       - name: Synthetic end-to-end test (not AI or research results)
         run: |
           mkdir -p /tmp/smoke
@@ -67,6 +74,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
       - uses: actions/download-artifact@v4
         with:
           name: shalla-dataset-and-official-workloads
@@ -78,8 +86,7 @@ jobs:
           python3 scripts/experiment3.py prepare --out /tmp/real
           cat /tmp/real/examples.json
           printf 'ReferenceJointCM\t0\t1\t-2\t-1\n' >/tmp/reference.tsv
-          mkdir -p build/classes && javac --release 21 -d build/classes src/charmap/*.java
-          java -Xmx4g -cp build/classes charmap.PositionEvaluator data/shalla /tmp/ref 8000 512 /tmp/reference.tsv 55
+          ./gradlew --no-daemon --console=plain positionEvaluator -PoutputDir=/tmp/ref -Pcandidates=/tmp/reference.tsv -PpartitionSize=8000 -Pbudget=512 -Pseed=55
           python3 - <<'PY'
           import csv
           a={(r['workload'],r['algorithm']):r for r in csv.DictReader(open('/tmp/ref/results.csv'))}

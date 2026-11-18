@@ -9,9 +9,6 @@ Methods: exact Oracle; 32-byte truncated MinMax at every budget as lower-cost re
 Metrics: pruning_pct counts query-partition pairs; partition_fpr_pct conditions on exact nonmembership; oracle_capture_pct = 100 - partition_fpr_pct when FN=0; retained_rows_pct accounts for unequal last partition. Global-negative pruning also reported. FN checks are exact for all observed matching query-partition pairs; fail on any FN. Offline bitset postings are not production latency. All comparison schemes serialize fixed-width payloads with shared schema; results.csv contains actual file sizes.
 
 Run:
-    mkdir -p build results
-    mkdir -p build/classes
-    javac --release 21 -d build/classes src/charmap/*.java
-    java -Xmx4g -cp build/classes charmap.PartitionSensitivity data/shalla results/p8000_b1024 8000 1024
+    ./gradlew partitionSensitivity -PpartitionSize=8000 -Pbudget=1024 -PoutputDir=results/p8000_b1024
 
 GitHub Actions uses the verified artifact from run 44195004791; if expired, rerun data preparation and run locally or update run-id. Only CSV and data manifests are uploaded; summary binaries are produced and measured on runner but can be regenerated locally.

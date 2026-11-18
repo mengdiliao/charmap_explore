@@ -13,11 +13,8 @@ Use the full prepared Shalla dataset (2,926,705 stored rows) and both original 1
 
 Run locally after preparing Shalla:
 
-    mkdir -p build results
-    mkdir -p build/classes
-    javac --release 21 -d build/classes src/charmap/*.java
     for b in 32 64 128 256; do
-      java -Xmx4g -cp build/classes charmap.ShallaPilot data/shalla results/b$b $b
+      ./gradlew shallaPilot -Pbudget=$b -PoutputDir=results/b$b
     done
 
 GitHub Actions uses the verified Shalla artifact from run 44195004791, which expires after 30 days. Regenerate or run locally if expired. Results include CSV and physical summary binaries.

@@ -4,7 +4,7 @@ P=8000, B=512 bytes, seed55; all 2,926,705 Shalla stored keys and both 10M offic
 
 ## Local quick start (macOS/Linux)
 
-Install Python 3.10+ and JDK 21 (on macOS: brew install openjdk@21, then configure JAVA_HOME and PATH). No Python third-party package needed for Experiment 3 itself.
+Install Python 3.10+ and JDK 21 (on macOS: brew install openjdk@21, then configure JAVA_HOME and PATH). No Python third-party package needed for Experiment 3 itself. Gradle Wrapper 8.14.3 is committed; no separate Gradle installation is required. First run downloads Gradle and test dependencies if running tests.
 Use the already prepared data artifact at https://github.com/mengdiliao/charmap_explore/actions/runs/44195004791/artifacts/14377239207 (requires repository access; expires after 30 days). Extract at repository root, such that data/shalla/dataset.txt, queries_uniform.txt, queries_zipf.txt exist. If expired, regenerate with scripts/prepare_shalla.py on Linux with Python3.12, GCC and pinned requirements; C rand() is platform dependent, so macOS regeneration may fail expected hashes. Use exact artifact wherever possible.
 
     python3 scripts/experiment3.py prepare
@@ -31,11 +31,11 @@ At https://claude.ai/ start one new chat, select Opus 5.5 if available, turn on 
     python3 scripts/experiment3.py freeze
     python3 scripts/experiment3.py evaluate
 
-Both workloads evaluated in one run. No API used in freeze/evaluate. Python validates combinations, fixes tuple order, generates seeded controls, writes frozen.json before benchmark. To repeat use another --out path on every command. Java uses a pinned port of the original libstdc++ mt19937_64 shuffle instead of Collections.shuffle, ensuring a platform-independent layout subject to the archived-result parity gate. Set JAVA_HEAP (default 4g) if needed. The retired C++ implementation is available in Git history at commit b948c10b57aa84857d0ba9a00d9f66ea1742fc5b; it is no longer present in the main working tree. Memory and run time depend on machine; no production latency claims.
+Both workloads evaluated in one run. No API used in freeze/evaluate. Python validates combinations, fixes tuple order, generates seeded controls, writes frozen.json before benchmark. To repeat use another --out path on every command. Java uses a pinned port of the original libstdc++ mt19937_64 shuffle instead of Collections.shuffle, ensuring a platform-independent layout subject to the archived-result parity gate. The Python runner invokes ./gradlew positionEvaluator automatically. Set JAVA_HEAP (default 4g) if needed. The retired C++ implementation is available in Git history at commit b948c10b57aa84857d0ba9a00d9f66ea1742fc5b; it is no longer present in the main working tree. Memory and run time depend on machine; no production latency claims.
 
 Output under runs/experiment3_level1 (gitignored):
 - prompt.md, config.json, examples.json, response_N.json, api_raw_N.json, frozen.json
-- runtime.json (Java version, source and frozen design hashes)
+- runtime.json (Gradle/JVM version info, build and source hashes, frozen design hash)
 - benchmark/results.csv, physical summary binaries
 - proposal_results.csv: all AI/random proposals, both workloads, deltas
 - report.md: best, median, mean, counts above Bloom by group/call.

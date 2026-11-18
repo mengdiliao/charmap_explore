@@ -4,7 +4,11 @@ on:
   push:
     branches: [main]
     paths:
-      - 'src/charmap/**'
+      - 'src/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradlew*'
+      - 'gradle/**'
       - 'scripts/verify_java_parity.py'
       - '.github/workflows/partition-sensitivity.yml'
 permissions:
@@ -70,6 +74,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
       - uses: actions/download-artifact@v4
         with:
           name: shalla-dataset-and-official-workloads
@@ -81,10 +86,9 @@ jobs:
           echo '081bf7628046d046533f63ed2e049e4aff6bd21d3151b64a41c8cbfc584a4a2a  data/shalla/dataset.txt' | sha256sum -c -
           echo '095d4cbd2cc6091bd6a660ad0826c203b00b8d70c364a0eb8319b86d49529fb8  data/shalla/queries_uniform.txt' | sha256sum -c -
           echo '7058cc63df718c76872a6788a35161a2d19156db739c4400f2a548799559cc52  data/shalla/queries_zipf.txt' | sha256sum -c -
-      - run: mkdir -p build/classes && javac --release 21 -d build/classes src/charmap/*.java
       - name: Full weighted evaluation
         run: |
-          java -Xmx4g -cp build/classes charmap.PartitionSensitivity data/shalla results/p${{ matrix.p }}_b${{ matrix.budget }} ${{ matrix.p }} ${{ matrix.budget }}
+          ./gradlew --no-daemon --console=plain partitionSensitivity -PoutputDir=results/p${{ matrix.p }}_b${{ matrix.budget }} -PpartitionSize=${{ matrix.p }} -Pbudget=${{ matrix.budget }}
           cp data/shalla/manifest.json results/p${{ matrix.p }}_b${{ matrix.budget }}/source_manifest.json
       - name: Compare Java to archived C++ results
         run: python3 scripts/verify_java_parity.py results/p${{ matrix.p }}_b${{ matrix.budget }}/results.csv results/shalla_partition_sensitivity.csv
