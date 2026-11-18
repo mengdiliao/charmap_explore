@@ -2,7 +2,7 @@ name: Experiment 3 Level 1 verification
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, 'refactor/code-organization']
     paths:
       - 'src/**'
       - 'build.gradle'
@@ -26,6 +26,34 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: JUnit correctness tests
         run: ./gradlew --no-daemon --console=plain test
+      - name: Byte-for-byte regression against pre-refactor Java
+        run: |
+          git fetch --no-tags origin 5f4d35b4a9722f08d238091207b030b6e07f5a35
+          git worktree add --detach /tmp/before-refactor 5f4d35b4a9722f08d238091207b030b6e07f5a35
+          mkdir -p /tmp/parity/{old,new,data,classes-old,classes-new}
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/parity/data')
+          keys=[f'www.sample{i}.com' for i in range(517)]+['x','ab','','192.0.2.1','a.example.org']
+          for name,rows in [('dataset',keys),('queries_uniform',keys+['absent.net']*5),('queries_zipf',keys+['x']*50+['other']*7)]:
+              (p/(name+'.txt')).write_text('\n'.join(rows)+'\n')
+          (p/'designs.tsv').write_text('ReferenceJointCM\t0\t1\t-2\t-1\nShortTuple\t0\t15\n')
+          PY
+          javac -d /tmp/parity/classes-old $(find /tmp/before-refactor/src/main/java -name '*.java')
+          javac -d /tmp/parity/classes-new $(find src/main/java -name '*.java')
+          for side in old new; do
+            pkg=charmap
+            if [ "$side" = new ]; then pkg=charmap.experiments; fi
+            cp=/tmp/parity/classes-$side
+            dest=/tmp/parity/$side
+            data=/tmp/parity/data
+            java -cp "$cp" "$pkg.ShallaPilot" "$data" "$dest/pilot32" 32
+            java -cp "$cp" "$pkg.ShallaPilot" "$data" "$dest/pilot256" 256
+            java -cp "$cp" "$pkg.PartitionSensitivity" "$data" "$dest/sensitivity" 8 64
+            java -cp "$cp" "$pkg.PositionEvaluator" "$data" "$dest/position" 8 64 "$data/designs.tsv" 55
+          done
+          diff -r /tmp/parity/old /tmp/parity/new
+          echo 'Identical CSV and serialized metadata across all four fixture configurations.'
       - name: Synthetic end-to-end test (not AI or research results)
         run: |
           mkdir -p /tmp/smoke

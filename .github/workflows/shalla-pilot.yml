@@ -2,7 +2,7 @@ name: Shalla full baseline pilot
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, 'refactor/code-organization']
     paths:
       - 'src/**'
       - 'build.gradle'
