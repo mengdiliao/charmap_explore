@@ -1,6 +1,7 @@
 package charmap.evaluation;
 import java.io.*;
 import java.nio.file.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 public final class ResultWriter {
     public static double pct(long a,long b){return b==0?0:100.0*a/b;}
