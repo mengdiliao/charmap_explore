@@ -1,0 +1,143 @@
+name: Unified hashing verification
+on:
+  push:
+    branches: ['experiment/unified-hashing']
+    paths:
+      - 'src/**'
+      - 'build.gradle'
+      - 'scripts/experiment3.py'
+      - '.github/workflows/unified-hashing.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  smoke-replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Unit tests of shared hashing and correctness
+        run: ./gradlew --no-daemon --console=plain clean test
+      - name: Replay frozen legacy fixture without an API
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin 9a3d9ad3c2a32b6b1c24f2d77bea8c5f937f44ee
+          git worktree add --detach /tmp/legacy-code 9a3d9ad3c2a32b6b1c24f2d77bea8c5f937f44ee
+          mkdir -p /tmp/data
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/data')
+          keys=[f'www.sample{i}.com' for i in range(31)]+['','x','ab','192.0.2.1','alpha.org']
+          (p/'dataset.txt').write_text('\n'.join(keys)+'\n')
+          (p/'queries_uniform.txt').write_text('\n'.join(keys+['other.net']*5)+'\n')
+          (p/'queries_zipf.txt').write_text('\n'.join(keys+['x']*30+['zz']*7)+'\n')
+          PY
+          python3 /tmp/legacy-code/scripts/experiment3.py prepare --data /tmp/data --out /tmp/legacy-run --smoke
+          python3 - <<'PY'
+          import json,random
+          from pathlib import Path
+          rng=random.Random(1);seen={(0,1,-2,-1)};candidates=[]
+          for k in [4]*8+[2,3,5,6]:
+              while True:
+                  p=rng.sample(list(range(16))+list(range(-16,0)),k)
+                  t=tuple(sorted(x for x in p if x>=0)+sorted(x for x in p if x<0))
+                  if t not in seen:
+                      seen.add(t); break
+              candidates.append({'positions':p,'reason':'synthetic smoke fixture, not AI output'})
+          Path('/tmp/legacy-run/response_1.json').write_text(json.dumps({'candidates':candidates}))
+          PY
+          python3 /tmp/legacy-code/scripts/experiment3.py freeze --out /tmp/legacy-run
+          python3 /tmp/legacy-code/scripts/experiment3.py evaluate --data /tmp/data --out /tmp/legacy-run
+          find /tmp/legacy-run -type f -print0 | sort -z | xargs -0 sha256sum >/tmp/legacy-before.sha
+          env -u ANTHROPIC_API_KEY python3 scripts/experiment3.py replay --data /tmp/data --from-run /tmp/legacy-run --out /tmp/unified-run
+          sha256sum -c /tmp/legacy-before.sha
+          cmp /tmp/legacy-run/frozen.json /tmp/unified-run/frozen.json
+          cmp /tmp/legacy-run/response_1.json /tmp/unified-run/response_1.json
+          python3 - <<'PY'
+          from pathlib import Path
+          import csv,json
+          p=Path('/tmp/unified-run')
+          with (p/'proposal_results.csv').open() as f: rows=list(csv.DictReader(f))
+          with (p/'hash_comparison.csv').open() as f: comparison=list(csv.DictReader(f))
+          assert len(rows)==48
+          assert all(int(r['false_negatives'])==0 for r in rows)
+          assert len(comparison)==2*(len(json.loads((p/'frozen.json').read_text())['designs'])+2)
+          assert json.loads((p/'runtime.json').read_text())['hash_version']=='fnv1a-mix-v1'
+          assert all(int(r['unified_false_negatives'])==0 for r in comparison)
+          assert any(float(r['delta_pruning_pp'])!=0 for r in comparison)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unified-hashing-smoke-results
+          path: /tmp/unified-run/
+  full-reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: shalla-dataset-and-official-workloads
+          run-id: 44195004791
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: .
+          # Original full workload artifact
+      - name: Verify data, run shared hashing reference and profiling
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from scripts.experiment3 import verify
+          from pathlib import Path
+          print(verify(Path('data/shalla')))
+          PY
+          printf 'ReferenceJointCM\t0\t1\t-2\t-1\n' >/tmp/reference.tsv
+          ./gradlew --no-daemon --console=plain positionEvaluator -PoutputDir=/tmp/reference -Pcandidates=/tmp/reference.tsv -PpartitionSize=8000 -Pbudget=512 -Pseed=55
+          ./gradlew --no-daemon --console=plain jointProfile -PoutputDir=/tmp/profile
+      - name: Verify fixed workload, oracle, exact projection and cross-implementation metrics
+        run: |
+          python3 - <<'PY'
+          import csv,math
+          from pathlib import Path
+          def load(p):
+              with open(p) as f: return list(csv.DictReader(f))
+          rows=load('/tmp/reference/results.csv')
+          assert len(rows)==6
+          assert all(int(r['false_negatives'])==0 for r in rows)
+          old={(r['workload'],r['algorithm']):r for r in load('results/shalla_partition_sensitivity.csv') if r['partition_size']=='8000' and r['budget_bytes']=='512'}
+          p=next(r for r in load('/tmp/profile/partitions.csv') if r['tuple']=='four' and r['partition_size']=='8000')
+          b=next(r for r in load('/tmp/profile/bitmaps.csv') if r['tuple']=='four' and r['partition_size']=='8000' and r['budget_bytes']=='512')
+          for name in ['global.csv','top_tokens.csv','partitions.csv']:
+              assert Path('/tmp/profile',name).read_bytes()==Path('results/joint_profile',name).read_bytes() or all(
+                  {k: v for k,v in r.items()}=={k:v for k,v in s.items()} or all(
+                      v==s[k] or math.isclose(float(v),float(s[k]),abs_tol=1e-8,rel_tol=0)
+                      for k,v in r.items())
+                  for r,s in zip(load('/tmp/profile/'+name),load('results/joint_profile/'+name),strict=True))
+          for r in rows:
+              w=r['workload'];n=r['algorithm']
+              prev=old[w,'JointCharacterMap' if n=='ReferenceJointCM' else n]
+              for k in ('queries','global_positive','global_negative','query_partition_pairs','oracle_retained','payload_used_bytes'):
+                  assert r[k]==prev[k],(w,n,k,r[k],prev[k])
+              if n=='Oracle': assert r['retained']==prev['retained']
+              if n=='OptimizedBloom': assert r['bloom_k']=='1'
+              if n=='ReferenceJointCM':
+                  for x,y in [('pruning_pct',w+'_hash_pruning_pct'),('mean_saturation_pct','mean_saturation_pct'),('collision_excess_pct','partition_collision_excess_pct')]:
+                      assert math.isclose(float(r[x]),float(b[y]),abs_tol=1e-8,rel_tol=0),(w,x,r[x],b[y])
+                  assert math.isclose(float(r['exact_joint_pruning_pct']),float(p[w+'_exact_pruning_pct']),abs_tol=1e-8,rel_tol=0)
+          print('Unified reference and profiling agree; exact projection and workload unchanged.')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unified-hashing-full-reference
+          path: |
+            /tmp/reference/
+            /tmp/profile/
