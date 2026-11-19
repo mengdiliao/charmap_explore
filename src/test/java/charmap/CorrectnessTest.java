@@ -102,9 +102,51 @@ class CorrectnessTest {
             assertEquals("0",row[cols.indexOf("false_negatives")]);
             assertEquals(row[0].equals("uniform")?"7":"6",row[cols.indexOf("queries")]);
             assertEquals(row[0].equals("uniform")?"6":"5",row[cols.indexOf("oracle_retained")]);
+            if(row[1].equals("OptimizedBloom")) {
+                assertEquals(5.0/3,Double.parseDouble(row[cols.indexOf("mean_token_ndv")]),1e-9);
+                assertTrue(Double.parseDouble(row[cols.indexOf("mean_saturation_pct")])>0);
+                assertTrue(Integer.parseInt(row[cols.indexOf("bloom_k")])>1);
+                assertEquals("",row[cols.indexOf("collision_excess_pct")]);
+            }
             long ret=Long.parseLong(row[cols.indexOf("retained")]);
             assertTrue(ret>=Long.parseLong(row[cols.indexOf("oracle_retained")]));
         }
         assertTrue(Files.size(out.resolve("ReferenceJointCM.bin"))>3*32);
     }
+    @Test void singleHashBloomDiagnostics(@TempDir Path dir)throws Exception {
+        // Force two distinct full keys into the same bit; no projection involved.
+        Map<Integer,String> seen=new HashMap<>();
+        String a=null,b=null;
+        for(int i=0;i<=256;i++){
+            String key="key"+i;
+            int bit=HashUtils.hashToBit(HashUtils.fnv1a(key),0,256);
+            String prior=seen.putIfAbsent(bit,key);
+            if(prior!=null){a=prior;b=key;break;}
+        }
+        assertNotNull(a);
+        assertNotNull(b);
+        Files.writeString(dir.resolve("dataset.txt"),a+"\n"+b+"\n");
+        Files.writeString(dir.resolve("queries_uniform.txt"),a+"\nabsent\n");
+        Files.writeString(dir.resolve("queries_zipf.txt"),b+"\nabsent\n");
+        Path candidates=dir.resolve("designs.tsv");
+        Files.writeString(candidates,"ReferenceJointCM\t0\t-1\n");
+        Path out=dir.resolve("out");
+        new Evaluator(DatasetLoader.load(dir,55),500,32,out,"position").run(candidates);
+        List<String> lines=Files.readAllLines(out.resolve("results.csv"));
+        List<String> cols=Arrays.asList(lines.get(0).split(",",-1));
+        int count=0;
+        for(String line:lines.subList(1,lines.size())){
+            String[] row=line.split(",",-1);
+            if(!row[1].equals("OptimizedBloom"))continue;
+            count++;
+            assertEquals("1",row[cols.indexOf("bloom_k")]);
+            assertEquals(2.0,Double.parseDouble(row[cols.indexOf("mean_token_ndv")]),1e-9);
+            assertEquals(100.0/256,Double.parseDouble(row[cols.indexOf("mean_saturation_pct")]),1e-9);
+            assertEquals(50.0,Double.parseDouble(row[cols.indexOf("collision_excess_pct")]),1e-9);
+            assertEquals("",row[cols.indexOf("exact_joint_pruning_pct")]);
+            assertEquals("0",row[cols.indexOf("false_negatives")]);
+        }
+        assertEquals(2,count);
+    }
+
 }
