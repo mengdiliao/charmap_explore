@@ -5,6 +5,12 @@ import charmap.data.LoadedData;
 import charmap.statistics.BitmapStatistic;
 final class JointDiagnostics {
     static void collect(BitmapStatistic c,LoadedData d,int P){
+        if(c.kind.equals("bloom")) {
+            // DatasetLoader rejects duplicate stored keys. Each key belongs to one partition.
+            c.ndv=d.keys.size();
+            for(long x:c.post)c.occupied+=Long.bitCount(x);
+            return;
+        }
         if(!c.kind.equals("joint"))return;
         HashMap<Long,long[]> q=new HashMap<>();
         for(var e:d.records.entrySet()){var f=e.getValue().freq;if(f[0]==0&&f[1]==0)continue;long t=CharacterEncoding.token(e.getKey(),c.positions);long[] a=q.computeIfAbsent(t,x->new long[2]);a[0]+=f[0];a[1]+=f[1];}
