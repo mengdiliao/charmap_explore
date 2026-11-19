@@ -124,7 +124,11 @@ public final class Evaluator {
         if(mode.equals("position")){
             if(m==null)s+=",,,,,,";
             else {BitmapStatistic c=m.cs[0];if(c.kind.equals("joint")){if(ret<c.exact[w])throw new IllegalStateException("Above exact ceiling");s+=","+ResultWriter.csv(ResultWriter.positions(c.positions),(double)c.ndv/np,ResultWriter.pct(c.occupied,(long)c.bytes*8*np),ResultWriter.pct(c.ndv-c.occupied,c.ndv),ResultWriter.pct(pairs-c.exact[w],pairs),"");}
-            else s+=",,,,,,"+c.k;}
+            else if(c.kind.equals("bloom")){
+                // Collision excess is comparable to Joint CM only for a single hash.
+                Object collision=c.k==1?ResultWriter.pct(c.ndv-c.occupied,c.ndv):"";
+                s+=","+ResultWriter.csv("",(double)c.ndv/np,ResultWriter.pct(c.occupied,(long)c.bytes*8*np),collision,"",c.k);
+            } else s+=",,,,,,"+c.k;}
         }
         csv.println(s);System.out.println(s);
     }
