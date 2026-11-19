@@ -1,43 +1,69 @@
-# Experiment 3 — Level 1: one-shot AI joint position selection
+# Experiment 3 — Level 1: one-shot AI position selection
 
-P=8000, B=512 bytes, seed55; all 2,926,705 Shalla stored keys and both 10M official query files, verified SHA256. No holdout, no evaluator feedback, no detailed profiling. Uniform primary, Zipf secondary. One Claude Opus 5.5 response, 12 proposals (8 four-position; 4 variable-length 2/3/5/6), 12 length-matched seeded random controls; duplicate designs evaluated once but all proposals preserved. Reference [0,1,-2,-1], optimized full-key Bloom (same theoretical integer k as Experiment 2), Oracle. All positions canonicalized, one tuple and same base257/mix mapping, missing code 128, no OTHER or hybrid. Fixed 512B payload, actual serialized bytes incl. shared schema measured; no false negatives. Exact projection ceiling is computed, but not used in AI prompt. All data and workloads used; no claim of independent generalization. Prompt includes prior full-workload baseline scores, not candidate scores.
+## 1. Objective
 
-## Local quick start (macOS/Linux)
+Test whether a single AI-generated set of position combinations can outperform length-matched random selection and an optimized full-key Bloom filter for equality queries. This experiment evaluates a single joint bitmap per partition, not a hybrid or an iterative AI optimization loop.
 
-Install Python 3.10+ and JDK 21 (on macOS: brew install openjdk@21, then configure JAVA_HOME and PATH). No Python third-party package needed for Experiment 3 itself. Gradle Wrapper 8.14.3 is committed; no separate Gradle installation is required. First run downloads Gradle and test dependencies if running tests.
-Use the already prepared data artifact at https://github.com/mengdiliao/charmap_explore/actions/runs/44195004791/artifacts/14377239207 (requires repository access; expires after 30 days). Extract at repository root, such that data/shalla/dataset.txt, queries_uniform.txt, queries_zipf.txt exist. If expired, regenerate with scripts/prepare_shalla.py on Linux with Python3.12, GCC and pinned requirements; C rand() is platform dependent, so macOS regeneration may fail expected hashes. Use exact artifact wherever possible.
+## 2. Setup
 
-    python3 scripts/experiment3.py prepare
+| Parameter | Value |
+| --- | --- |
+| Dataset | Shalla; 2,926,705 unique ASCII stored keys |
+| Queries | Both complete official-generator workloads; 10,000,000 queries each |
+| Partition size / count | 8,000 / 366 (last: 6,705 keys) |
+| Partition seed | 55; deterministic MT19937-64 shuffle |
+| Payload | 512 bytes per partition; nominal BPK = 8 × 512 / 8,000 = 0.512 |
+| Candidate lengths | 2–6 distinct positions from 0..15 and -16..-1 |
+| AI configuration | claude-opus-5-5; high effort; max_tokens=16000; one response |
+| Random controls | Seed 155; one length-matched random combination per AI proposal |
+| Baselines | OptimizedBloom, ReferenceJointCM and exact full-key Oracle |
 
-Open runs/experiment3_level1/prompt.md and review real examples. Missing example categories are omitted. Prompt is frozen via SHA256. If a previous three-call configuration was prepared, use a fresh directory (e.g. --out runs/experiment3_level1_onecall on every command); existing data and runs are not deleted. No full dataset/workload is transmitted.
+See [data preparation](data-preparation.md) for the source, workload distribution and checksums. The same partition layout, workload and payload apply to every evaluated design.
 
-## Option A: API (preferred for reproducibility)
+## 3. Design and selection
 
-Visit https://platform.claude.com/ and create an API key, enable billing/credits (separate from Claude chat subscription). Never commit your key.
+The original AI prompt contained the task, dataset/workload description, structural sample strings and historical baseline scores. It requested 12 unique combinations, exactly eight of length four and four of other allowed lengths. The observed response contains eight four-position tuples, three triples and one five-position tuple. Positions are canonicalized (nonnegative ascending, then negative ascending). Random combinations match each corresponding AI tuple's length and are unique within the random group, excluding the reference. The evaluator deduplicates identical designs if needed; this run has 25 unique joint maps including the reference.
 
-    read -s "ANTHROPIC_API_KEY?Anthropic API key: "
-    export ANTHROPIC_API_KEY
-    python3 scripts/experiment3.py generate
-    unset ANTHROPIC_API_KEY
+The [recorded prompt](../runs/experiment3_unified_hashing/prompt.md), [AI response](../runs/experiment3_unified_hashing/response_1.json), [raw API response](../runs/experiment3_unified_hashing/api_raw_1.json), [frozen candidate list](../runs/experiment3_unified_hashing/frozen.json) and [configuration](../runs/experiment3_unified_hashing/config.json) are retained. No candidate was chosen using evaluation feedback. The reported run reuses the original designs with unified hashing rather than generating a second AI response. Consequently, the original prompt describes the older mapping and its historical scores; it is provenance, not a description of the current implementation. The new scoring uses only the current unified implementation.
 
-The read example is zsh (macOS). Bash use read -s -p "Anthropic API key: " ANTHROPIC_API_KEY then export. One independent call, no tools; model claude-opus-5-5, output_config.effort high, max_tokens 16000. Adaptive thinking always on for this model; no separate thinking field. Uses stdlib HTTPS, no SDK. Saves api_raw_1.json with model, usage, stop reason, and response_1.json. No automatic retries; if interrupted, inspect saved output and rerun generate only if no response/raw file exists. Invalid output is preserved; do not manually edit positions or give feedback. For a fresh independent retry preserve original failed response elsewhere and disclose failure/retry.
+## 4. Statistics and shared hashing
 
-## Option B: Claude chat
+- **Optimized Bloom:** hash the entire key; choose integer k in 1..16 minimizing the standard Bloom FPR approximation using nominal partition size and bitmap budget. Here k=1.
+- **Joint Character Map:** extract one ordered tuple from the selected positions. Positive indices count from the start (zero-based), negative indices from the end. An out-of-range position is symbol 128 (MISSING), distinct from ASCII 0–127. For example, [0,1,-2,-1] projects www.example.com to wwom.
+- **Reference Joint CM:** a fixed candidate using [0,1,-2,-1].
+- **Oracle:** exact full-key membership per partition, an upper bound without a comparable metadata budget.
 
-At https://claude.ai/ start one new chat, select Opus 5.5 if available, turn on extended thinking / high effort if UI offers it, no web/tools. Paste prompt.md into the chat. Save the JSON text unedited under runs/experiment3_level1/response_1.json. Record displayed model, settings, dates and any limitations in a local manual_notes.txt. UI may not expose exact model ID, effort, usage; API is preferred for thesis.
+Both Bloom and Joint CM use the same 64-bit FNV-1a update over their input symbols. For raw FNV result h, bit index j is unsigned_remainder(mix(h + j × 0x9e3779b97f4a7c15), m), with 64-bit wraparound and m=4096. Each index uses one SplitMix64-style finalizer; both methods use j=0 in this run. Insertion sets the bit; querying an unset bit safely excludes a partition. The only structural difference at k=1 is full-key versus projected-key input. In this sense, Joint CM is a single-hash Bloom-style bitmap over projected keys.
 
-## Run and read
+Base-257 token encoding does NOT determine the deployed joint bitmap index. It is a lossless representation of a fixed-length projected tuple (up to six ASCII/MISSING symbols here) for diagnostics. Projection collisions arise when different full strings share a token; bitmap collisions arise when different tokens map to the same bit. The [encoding](../src/main/java/charmap/encoding/README.md), [hashing](../src/main/java/charmap/hashing/README.md) and [statistics](../src/main/java/charmap/statistics/README.md) package guides explain these operations.
 
-    python3 scripts/experiment3.py freeze
-    python3 scripts/experiment3.py evaluate
+## 5. Evaluation
 
-Both workloads evaluated in one run. No API used in freeze/evaluate. Python validates combinations, fixes tuple order, generates seeded controls, writes frozen.json before benchmark. To repeat use another --out path on every command. Java uses a pinned port of the original libstdc++ mt19937_64 shuffle instead of Collections.shuffle, ensuring a platform-independent layout subject to the archived-result parity gate. The Python runner invokes ./gradlew positionEvaluator automatically. Set JAVA_HEAP (default 4g) if needed. The retired C++ implementation is available in Git history at commit b948c10b57aa84857d0ba9a00d9f66ea1742fc5b; it is no longer present in the main working tree. Memory and run time depend on machine; no production latency claims.
+Each query occurrence is evaluated against all partitions. Let Q be the number of query occurrences, N the number of partitions, R the number of retained query–partition pairs, and O the exact Oracle-retained pairs. Duplicate query values are evaluated once and weighted by their multiplicities; this preserves full-workload counts. Both globally positive and negative queries contribute to overall pruning.
 
-Output under runs/experiment3_level1 (gitignored):
-- prompt.md, config.json, examples.json, response_N.json, api_raw_N.json, frozen.json
-- runtime.json (Gradle/JVM version info, build and source hashes, frozen design hash)
-- benchmark/results.csv, physical summary binaries
-- proposal_results.csv: all AI/random proposals, both workloads, deltas
-- report.md: best, median, mean, counts above Bloom by group/call.
+| Metric | Definition |
+| --- | --- |
+| Pruning rate (%) | 100 × (Q × N − R) / (Q × N) |
+| False-positive pairs | R − O, provided there are no false negatives |
+| Partition FPR (%) | 100 × (R − O) / (Q × N − O) |
+| False negatives | Query occurrences whose true containing partition is pruned |
+| Negative pruning (%) | Fraction of pairs pruned only among globally absent query keys |
+| Oracle capture (%) | 100 × (Q × N − R) / (Q × N − O) |
+| Mean token NDV | Mean number of distinct exact projected tokens per partition |
+| Mean saturation (%) | Total occupied bits / total bitmap bits × 100 |
+| Collision excess (%) | (Sum of per-partition token NDVs − sum of occupied bits) / sum of token NDVs × 100 |
+| Exact joint pruning (%) | Pruning if each partition stored an exact set of projected tokens (no bitmap collision) |
+| Metadata size / actual BPK | Serialized file bytes; 8 × bytes / stored keys |
+| Delta vs Bloom (pp) | Candidate pruning rate minus same-workload Bloom pruning rate |
 
-No real AI response is provided in the repository. Test fixtures are explicitly synthetic. No API spend occurs until you run generate.
+Exact joint pruning is a ceiling for that position combination, not the full-key Oracle. It is calculated offline, not stored inside the 512-byte metadata. All actual statistics are subject to zero false negatives. Physical metadata includes fixed header and shared schema, so actual BPK is slightly above nominal. Transposed postings and frequency aggregation are benchmark accelerations, not claims about production query latency.
+
+## 6. Results and limitations
+
+See the [published result guide](../runs/experiment3_unified_hashing/README.md) for the numerical summary and raw files. One AI response, one random seed, one partition seed and one hash configuration were tested. Both workloads are fully evaluated, with no holdout and no iteration or detailed profiling fed to the AI. The best candidate is identified post hoc; this is a stage result, not a statistically validated claim that AI improves selection or that the best design generalizes.
+
+## 7. Reproduce
+
+Use the [root README](../README.md#reproduce-the-published-result) to evaluate copies of the already frozen candidates. Python verifies the source data and prompt/response hashes, writes designs.tsv and runtime.json, invokes the Gradle positionEvaluator task, then writes proposal_results.csv and report.md. The source run is not modified. JDK 21 and Python 3.10+ are sufficient for evaluation; Gradle 8.14.3 and JUnit dependencies are fetched when required. Set JAVA_HEAP=6g if more heap is needed; the default is 4g. The original data-generation dependencies are separate. For additional independent AI experiments, see [scripts](../scripts/README.md); these are not needed for this result.
+
+Verification: `./gradlew clean test`. The [unified verification workflow](../.github/workflows/unified-hashing.yml) tests shared hashing, replay and full Shalla reference/profiling consistency. Historical CSVs used by those checks are not part of the main experiment results.
