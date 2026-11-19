@@ -1,0 +1,15 @@
+{
+  "source_run": "/Users/Zhuanz/Desktop/thesis/charmap_explore/runs/experiment3_level1",
+  "frozen_sha256": "949b7703f4857520ba5a7ed88e9726d25b8c7670dc0503659595d11422da474a",
+  "hash_version": "fnv1a-mix-v1",
+  "source_hash_version": "legacy",
+  "copied_sha256": {
+    "config.json": "1ebcb115659daa3c92478d04f0dcc620ac591bc662de8b79189a6672f93a2f37",
+    "prompt.md": "cfbb0947b581d0464227df6d84c7a795bbe9b737fca88224ee9874b63fb88803",
+    "frozen.json": "949b7703f4857520ba5a7ed88e9726d25b8c7670dc0503659595d11422da474a",
+    "response_1.json": "cc0c17811a7f6e90ac85af44733b06642e33409adcd5d04d7200510308b5930a",
+    "examples.json": "7deaf7636a37c19ad9d7a0f3f85b33cd14e863622141badaa6064273772cf794",
+    "api_raw_1.json": "0c662115676376fab5b7f6c09079d9995457689c0dc8cab84a28fdf722917b13"
+  },
+  "legacy_results_sha256": "f66419718f029ae1187b6744de8e7a8643d6f89a146aed1ac326ee7679619871"
+}

@@ -1,0 +1,547 @@
+{
+  "config": {
+    "level": 1,
+    "model": "claude-opus-5-5",
+    "effort": "high",
+    "max_tokens": 16000,
+    "partition_size": 8000,
+    "budget": 512,
+    "partition_seed": 55,
+    "calls": 1,
+    "candidates_per_call": 12,
+    "random_seeds": [
+      155
+    ],
+    "input_sha256": {
+      "dataset.txt": "081bf7628046d046533f63ed2e049e4aff6bd21d3151b64a41c8cbfc584a4a2a",
+      "queries_uniform.txt": "095d4cbd2cc6091bd6a660ad0826c203b00b8d70c364a0eb8319b86d49529fb8",
+      "queries_zipf.txt": "7058cc63df718c76872a6788a35161a2d19156db739c4400f2a548799559cc52"
+    },
+    "prompt_sha256": "cfbb0947b581d0464227df6d84c7a795bbe9b737fca88224ee9874b63fb88803",
+    "smoke": false
+  },
+  "response_sha256": {
+    "response_1.json": "cc0c17811a7f6e90ac85af44733b06642e33409adcd5d04d7200510308b5930a"
+  },
+  "designs": [
+    {
+      "id": "ReferenceJointCM",
+      "positions": [
+        0,
+        1,
+        -2,
+        -1
+      ]
+    },
+    {
+      "id": "CM_001",
+      "positions": [
+        0,
+        -5,
+        -2,
+        -1
+      ]
+    },
+    {
+      "id": "CM_002",
+      "positions": [
+        12,
+        -15,
+        -14,
+        -6
+      ]
+    },
+    {
+      "id": "CM_003",
+      "positions": [
+        0,
+        -6,
+        -5,
+        -1
+      ]
+    },
+    {
+      "id": "CM_004",
+      "positions": [
+        1,
+        3,
+        5,
+        11
+      ]
+    },
+    {
+      "id": "CM_005",
+      "positions": [
+        0,
+        4,
+        -5,
+        -1
+      ]
+    },
+    {
+      "id": "CM_006",
+      "positions": [
+        4,
+        6,
+        11,
+        15
+      ]
+    },
+    {
+      "id": "CM_007",
+      "positions": [
+        0,
+        1,
+        -5,
+        -1
+      ]
+    },
+    {
+      "id": "CM_008",
+      "positions": [
+        2,
+        5,
+        14,
+        -11
+      ]
+    },
+    {
+      "id": "CM_009",
+      "positions": [
+        4,
+        -5,
+        -4,
+        -1
+      ]
+    },
+    {
+      "id": "CM_010",
+      "positions": [
+        3,
+        7,
+        13,
+        -1
+      ]
+    },
+    {
+      "id": "CM_011",
+      "positions": [
+        1,
+        -6,
+        -5,
+        -1
+      ]
+    },
+    {
+      "id": "CM_012",
+      "positions": [
+        6,
+        7,
+        -10,
+        -5
+      ]
+    },
+    {
+      "id": "CM_013",
+      "positions": [
+        0,
+        -7,
+        -5,
+        -1
+      ]
+    },
+    {
+      "id": "CM_014",
+      "positions": [
+        3,
+        -14,
+        -4,
+        -2
+      ]
+    },
+    {
+      "id": "CM_015",
+      "positions": [
+        0,
+        -5,
+        -4,
+        -1
+      ]
+    },
+    {
+      "id": "CM_016",
+      "positions": [
+        0,
+        2,
+        11,
+        -1
+      ]
+    },
+    {
+      "id": "CM_017",
+      "positions": [
+        0,
+        -5,
+        -1
+      ]
+    },
+    {
+      "id": "CM_018",
+      "positions": [
+        9,
+        14,
+        -7
+      ]
+    },
+    {
+      "id": "CM_019",
+      "positions": [
+        4,
+        -5,
+        -1
+      ]
+    },
+    {
+      "id": "CM_020",
+      "positions": [
+        7,
+        -11,
+        -1
+      ]
+    },
+    {
+      "id": "CM_021",
+      "positions": [
+        -6,
+        -5,
+        -1
+      ]
+    },
+    {
+      "id": "CM_022",
+      "positions": [
+        -9,
+        -8,
+        -3
+      ]
+    },
+    {
+      "id": "CM_023",
+      "positions": [
+        0,
+        1,
+        -5,
+        -2,
+        -1
+      ]
+    },
+    {
+      "id": "CM_024",
+      "positions": [
+        12,
+        13,
+        15,
+        -5,
+        -3
+      ]
+    }
+  ],
+  "proposals": [
+    {
+      "call": 1,
+      "group": "AI",
+      "proposal_id": "A1_01",
+      "positions": [
+        0,
+        -5,
+        -2,
+        -1
+      ],
+      "reason": "Replaces the low-entropy second character with the last name character before common suffixes.",
+      "algorithm": "CM_001"
+    },
+    {
+      "call": 1,
+      "group": "Random",
+      "proposal_id": "R1_01",
+      "positions": [
+        12,
+        -15,
+        -14,
+        -6
+      ],
+      "algorithm": "CM_002"
+    },
+    {
+      "call": 1,
+      "group": "AI",
+      "proposal_id": "A1_02",
+      "positions": [
+        0,
+        -6,
+        -5,
+        -1
+      ],
+      "reason": "Uses two name-end characters plus the first and last characters to balance discrimination.",
+      "algorithm": "CM_003"
+    },
+    {
+      "call": 1,
+      "group": "Random",
+      "proposal_id": "R1_02",
+      "positions": [
+        1,
+        3,
+        5,
+        11
+      ],
+      "algorithm": "CM_004"
+    },
+    {
+      "call": 1,
+      "group": "AI",
+      "proposal_id": "A1_03",
+      "positions": [
+        0,
+        4,
+        -5,
+        -1
+      ],
+      "reason": "Position 4 skips the www prefix to reach the first name character.",
+      "algorithm": "CM_005"
+    },
+    {
+      "call": 1,
+      "group": "Random",
+      "proposal_id": "R1_03",
+      "positions": [
+        4,
+        6,
+        11,
+        15
+      ],
+      "algorithm": "CM_006"
+    },
+    {
+      "call": 1,
+      "group": "AI",
+      "proposal_id": "A1_04",
+      "positions": [
+        0,
+        1,
+        -5,
+        -1
+      ],
+      "reason": "Keeps the reference prefix but swaps the suffix 'o' for a name character.",
+      "algorithm": "CM_007"
+    },
+    {
+      "call": 1,
+      "group": "Random",
+      "proposal_id": "R1_04",
+      "positions": [
+        2,
+        5,
+        14,
+        -11
+      ],
+      "algorithm": "CM_008"
+    },
+    {
+      "call": 1,
+      "group": "AI",
+      "proposal_id": "A1_05",
+      "positions": [
+        4,
+        -5,
+        -4,
+        -1
+      ],
+      "reason": "Pairs the post-www character with a name-end character and low-entropy TLD separators.",
+      "algorithm": "CM_009"
+    },
+    {
+      "call": 1,
+      "group": "Random",
+      "proposal_id": "R1_05",
+      "positions": [
+        3,
+        7,
+        13,
+        -1
+      ],
+      "algorithm": "CM_010"
+    },
+    {
+      "call": 1,
+      "group": "AI",
+      "proposal_id": "A1_06",
+      "positions": [
+        1,
+        -6,
+        -5,
+        -1
+      ],
+      "reason": "The second character separates www from non-www keys while the name end adds entropy.",
+      "algorithm": "CM_011"
+    },
+    {
+      "call": 1,
+      "group": "Random",
+      "proposal_id": "R1_06",
+      "positions": [
+        6,
+        7,
+        -10,
+        -5
+      ],
+      "algorithm": "CM_012"
+    },
+    {
+      "call": 1,
+      "group": "AI",
+      "proposal_id": "A1_07",
+      "positions": [
+        0,
+        -7,
+        -5,
+        -1
+      ],
+      "reason": "Spaced name-end characters reduce correlation while limiting saturation.",
+      "algorithm": "CM_013"
+    },
+    {
+      "call": 1,
+      "group": "Random",
+      "proposal_id": "R1_07",
+      "positions": [
+        3,
+        -14,
+        -4,
+        -2
+      ],
+      "algorithm": "CM_014"
+    },
+    {
+      "call": 1,
+      "group": "AI",
+      "proposal_id": "A1_08",
+      "positions": [
+        0,
+        -5,
+        -4,
+        -1
+      ],
+      "reason": "Position -4 is often a dot, so it adds suffix-length information cheaply.",
+      "algorithm": "CM_015"
+    },
+    {
+      "call": 1,
+      "group": "Random",
+      "proposal_id": "R1_08",
+      "positions": [
+        0,
+        2,
+        11,
+        -1
+      ],
+      "algorithm": "CM_016"
+    },
+    {
+      "call": 1,
+      "group": "AI",
+      "proposal_id": "A1_09",
+      "positions": [
+        0,
+        -5,
+        -1
+      ],
+      "reason": "Three moderately informative characters may avoid saturating 4096 bits at 8000 keys.",
+      "algorithm": "CM_017"
+    },
+    {
+      "call": 1,
+      "group": "Random",
+      "proposal_id": "R1_09",
+      "positions": [
+        9,
+        14,
+        -7
+      ],
+      "algorithm": "CM_018"
+    },
+    {
+      "call": 1,
+      "group": "AI",
+      "proposal_id": "A1_10",
+      "positions": [
+        4,
+        -5,
+        -1
+      ],
+      "reason": "A compact tuple targets mid-frequency combinations whose counts fall below the partition size.",
+      "algorithm": "CM_019"
+    },
+    {
+      "call": 1,
+      "group": "Random",
+      "proposal_id": "R1_10",
+      "positions": [
+        7,
+        -11,
+        -1
+      ],
+      "algorithm": "CM_020"
+    },
+    {
+      "call": 1,
+      "group": "AI",
+      "proposal_id": "A1_11",
+      "positions": [
+        -6,
+        -5,
+        -1
+      ],
+      "reason": "Suffix-anchored name characters stay informative regardless of prefix structure.",
+      "algorithm": "CM_021"
+    },
+    {
+      "call": 1,
+      "group": "Random",
+      "proposal_id": "R1_11",
+      "positions": [
+        -9,
+        -8,
+        -3
+      ],
+      "algorithm": "CM_022"
+    },
+    {
+      "call": 1,
+      "group": "AI",
+      "proposal_id": "A1_12",
+      "positions": [
+        0,
+        1,
+        -5,
+        -2,
+        -1
+      ],
+      "reason": "Extends the reference with one name character to raise discrimination modestly.",
+      "algorithm": "CM_023"
+    },
+    {
+      "call": 1,
+      "group": "Random",
+      "proposal_id": "R1_12",
+      "positions": [
+        12,
+        13,
+        15,
+        -5,
+        -3
+      ],
+      "algorithm": "CM_024"
+    }
+  ]
+}

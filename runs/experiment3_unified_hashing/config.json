@@ -1,0 +1,21 @@
+{
+  "level": 1,
+  "model": "claude-opus-5-5",
+  "effort": "high",
+  "max_tokens": 16000,
+  "partition_size": 8000,
+  "budget": 512,
+  "partition_seed": 55,
+  "calls": 1,
+  "candidates_per_call": 12,
+  "random_seeds": [
+    155
+  ],
+  "input_sha256": {
+    "dataset.txt": "081bf7628046d046533f63ed2e049e4aff6bd21d3151b64a41c8cbfc584a4a2a",
+    "queries_uniform.txt": "095d4cbd2cc6091bd6a660ad0826c203b00b8d70c364a0eb8319b86d49529fb8",
+    "queries_zipf.txt": "7058cc63df718c76872a6788a35161a2d19156db739c4400f2a548799559cc52"
+  },
+  "prompt_sha256": "cfbb0947b581d0464227df6d84c7a795bbe9b737fca88224ee9874b63fb88803",
+  "smoke": false
+}

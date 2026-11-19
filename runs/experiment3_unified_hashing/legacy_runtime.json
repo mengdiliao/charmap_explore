@@ -1,0 +1,20 @@
+{
+  "gradle_version_info": "\n------------------------------------------------------------\nGradle 8.14.3\n------------------------------------------------------------\n\nBuild time:    2025-07-04 13:15:44 UTC\nRevision:      e5ee1df3d88b8ca3a8074787a94f373e3090e1db\n\nKotlin:        2.0.21\nGroovy:        3.0.24\nAnt:           Apache Ant(TM) version 1.10.15 compiled on August 25 2024\nLauncher JVM:  24.0.2 (Eclipse Adoptium 24.0.2+12)\nDaemon JVM:    /Users/Zhuanz/.sdkman/candidates/java/24.0.2-tem (no JDK specified, using current Java home)\nOS:            Mac OS X 27.0.1 aarch64\n\n",
+  "platform": "darwin",
+  "source_sha256": {
+    "Core.java": "f9b8890257fa176da18318430a1b092a90c3db7acdb522bbebf76d17d3e0e7bf",
+    "Evaluator.java": "22aae830ad091cb95cc4b68f4bc4b21cd353e453a1be4c149442306e2a88fa84",
+    "JointProfile.java": "93f3c1077f1554f83b3e25784735348f951875664bfa10d1052c4f65ac2ec702",
+    "PartitionSensitivity.java": "b58bee0155c3a37baf5005ae7bcb3848929637f6e568f6feda89ef4e396024a8",
+    "PositionEvaluator.java": "f5d8522473c69749a0ea919d80f359aa9a2bfc62bbda88e0cec270db9147e5da",
+    "ShallaPilot.java": "2f89d1b27b902b013d958920c0c84a45fc6dffbc9c783b106d8131b0f63c9912"
+  },
+  "build_sha256": {
+    "build.gradle": "f1e86f1e5b9795b8cda46b4adc3e77647c5a7abc33e71bc1ff08a51846bb0a36",
+    "settings.gradle": "ea7f18047d9e4328ab99bc800f768b60314a7980605ecc5ca4bfc4d488afc6cd",
+    "gradle/wrapper/gradle-wrapper.properties": "189d67949ab358e1f4f9bee64afe8ccb2345b20d471b29a6392193ae77bf2782",
+    "gradle/wrapper/gradle-wrapper.jar": "7d3a4ac4de1c32b59bc6a4eb8ecb8e612ccd0cf1ae1e99f66902da64df296172"
+  },
+  "frozen_sha256": "949b7703f4857520ba5a7ed88e9726d25b8c7670dc0503659595d11422da474a",
+  "layout": "libstdc++-mt19937_64-paired-shuffle-v1"
+}
