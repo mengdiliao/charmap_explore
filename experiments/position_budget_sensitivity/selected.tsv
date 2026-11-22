@@ -1,0 +1,5 @@
+ReferenceJointCM	0	1	-2	-1
+AI_Uniform	0	1	-5	-1
+AI_Zipf	0	4	-5	-1
+Random_Uniform	1	3	5	11
+Random_Zipf	6	7	-10	-5
