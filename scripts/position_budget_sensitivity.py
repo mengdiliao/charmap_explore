@@ -187,7 +187,10 @@ def merge(source_dir, output):
                 "false negatives, saturation, collisions and per-design collision-free ceilings.",
                 "The collision-free ceiling belongs to each individual position combination;",
                 "it is not a universal bound for character maps.", ""]
-    report = output.with_suffix(".md")
+    # The main position_budget_sensitivity.md contains the reviewed analysis
+    # of all 23 configurations. Keep this machine-generated compact summary
+    # under a separate path so re-running merge cannot erase that report.
+    report = output.with_name(output.stem + ".auto-summary.md")
     report.write_text("\n".join(summary), encoding="utf-8")
     print(f"Validated {len(rows)} rows: {output}, {report}", flush=True)
 
