@@ -54,7 +54,11 @@ class StageOneTests(unittest.TestCase):
             self.assertEqual(set(p.name for p in out.iterdir()), {"config.json", "prompt_call1.txt"})
             self.assertEqual(data.read_text(), "a\nb\nc\nd\ne\n")
             self.assertIn("original file order", (out/"prompt_call1.txt").read_text())
-            self.assertIn("MT19937-64/libstdc++-compatible", (out/"prompt_call1.txt").read_text())
+            prompt = (out/"prompt_call1.txt").read_text()
+            self.assertIn("No precomputed partition layout is provided or required", prompt)
+            self.assertIn("label the results as estimates", prompt)
+            for forbidden in ("shuffle", "mt19937", "libstdc++", "partition_seed", "seed: 55"):
+                self.assertNotIn(forbidden, prompt.lower())
             # Old prepared runs must not silently use the revised input semantics.
             old_cfg = dict(cfg)
             old_cfg.pop("input_layout")
