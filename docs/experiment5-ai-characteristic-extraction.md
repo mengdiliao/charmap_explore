@@ -34,18 +34,6 @@ python3 scripts/experiment5.py generate --out runs/experiment5_zipf
 
 The command sends only the text prompt, not the dataset or query files. It saves request.json, api_raw.json, response.txt, extract_characteristics.py and generation.json under ai/call_1/. It verifies Python syntax, never runs generated source, and never calls a second model. It prints the source SHA-256. No automatic retries; an intentional independent attempt needs --call 2 (and retain the failed original).
 
-### Resume a truncated first-call response
-
-If api_raw.json reports stop_reason=max_tokens, retain the existing ai/call_N directory. No new prepare is required. Run:
-
-```bash
-python3 scripts/experiment5.py resume --out runs/experiment5_uniform --call 1 --max-tokens 32000
-```
-
-This is one additional paid request within the first-stage generation process, not the second statistic-design call. It uses the original model, effort and saved prompt with the partial source, rewinds any incomplete last line, checks an exact overlap, and compiles the assembled Python without executing it. The original response is unchanged. Each attempt is saved in a new resume_N directory; if the continuation is also truncated or fails the overlap check, an explicit repeat of the command starts from the latest successfully joined partial source. If no complete source line exists, use a new generate --call N instead. No automatic requests or retries are made. On success, extract_characteristics.py and generation.json are created in the original call directory. Review the assembled program before running it. Syntax and exact overlap do not guarantee semantic correctness.
-
-The optional --max-tokens flag is also available for generate; the default remains the prepared config value (16000). A larger limit must be supported by the selected model and may increase cost and latency. Continued runs must be reported as multiple API requests, with total recorded input/output usage and individual attempts; elapsed time of older truncated requests may be unavailable. Failed requests without an API response may have unknown usage. Keep these differences visible when comparing Experiment 4 and 5.
-
 ## 3. Review and execute (offline)
 
 Read the entire generated Python source first; check the eight characteristic definitions, absence of candidate search and input handling. Syntax validation is not a security or semantic guarantee. Docker Desktop or Docker Engine must be available. Pull the runtime image once (requires network before execution):
