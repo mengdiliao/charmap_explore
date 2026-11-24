@@ -1,4 +1,10 @@
-# Experiment 3 scripts
+# Experiment scripts
+
+## Experiment 4 — offline profiling
+
+[experiment4.py](experiment4.py) generates descriptive profiles, a matched control prompt and a profiled prompt for one selected workload (uniform or zipf). [test_experiment4.py](test_experiment4.py) provides offline fixture tests. Run instructions: [Experiment 4](../docs/experiment4-simple-profiling.md). This script does not call AI or run Gradle; keep Experiment 3 commands separate.
+
+## Experiment 3
 
 | File | Responsibility |
 | --- | --- |
