@@ -1,6 +1,6 @@
-# Experiment 4 — Simple Statistical Profiling (preparation)
+# Experiment 4 — Simple Statistical Profiling (preparation and AI generation)
 
-This branch adds workload-specific offline profiling and prompts. See [Experiment 4 instructions](docs/experiment4-simple-profiling.md) for the eight characteristics, file-selection flags, matched control, full-workload profiling, raw dot-count categories and tests. No AI API call or evaluation has been performed as part of preparation.
+This branch adds workload-specific offline profiling and prompts. See [Experiment 4 instructions](docs/experiment4-simple-profiling.md) for the eight characteristics, file-selection flags, matched control, full-workload profiling, raw dot-count categories and tests. The prepare command is offline; generate makes one explicit AI API call for a selected prompt arm. Candidate evaluation is not yet integrated.
 
 ---
 
