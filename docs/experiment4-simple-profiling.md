@@ -1,8 +1,8 @@
-# Experiment 4 — Simple Statistical Profiling (preparation and AI generation)
+# Experiment 4 — Simple Statistical Profiling 
 
 ## Goal
 
-Measure whether adding eight simple dataset/workload characteristics improves AI-guided selection of one Joint Character Map's positions. Uniform and Zipf are separate target-workload experiments, not a single joint objective. This branch prepares inputs and prompts and supports explicit AI generation; it does not yet freeze or evaluate candidates or modify Experiment 3's Java implementation/results.
+Measure whether adding eight simple dataset/workload characteristics improves AI-guided selection of one Joint Character Map's positions. Uniform and Zipf are separate target-workload experiments, not a single joint objective. This branch prepares inputs and prompts, supports explicit AI generation, and evaluates the profiled candidates on their target workload. The original Experiment 3 two-workload benchmark mode and results are preserved.
 
 ## Run
 
@@ -18,7 +18,7 @@ python3 scripts/experiment4.py prepare --workload zipf \
 
 The default input directory is data/shalla. The workload flag selects queries_uniform.txt or queries_zipf.txt. To explicitly select input files, use --dataset-file and --query-file (and still specify --workload). --data selects a directory instead. Only the selected query file is read; the other is not required. Default checks verify the selected file and dataset against the Experiment 3 pinned SHA-256 values. Use --allow-unpinned only for intentionally different inputs, and --examples with a JSON object of actual stored strings if the original samples are not members of your dataset. The workload label must describe the supplied query file; a checksum cannot verify its distribution.
 
-The entire selected query file is used for profiling, preserving every query occurrence. The pinned official files contain 10 million occurrences each. No query split is created or required. Future evaluation uses the same full selected file, consistent with Experiment 3: this is known-workload (in-sample) optimization, not evidence of generalization to unseen queries. Use fresh output paths. The profiler aborts rather than overwrites an existing run, including an incomplete one. Outputs produced under the earlier classification scheme must be regenerated in fresh directories.
+The entire selected query file is used for profiling, preserving every query occurrence. The pinned official files contain 10 million occurrences each. No query split is created or required. Evaluation uses the same full selected file, consistent with Experiment 3: this is known-workload (in-sample) optimization, not evidence of generalization to unseen queries. Use fresh output paths. The profiler aborts rather than overwrites an existing run, including an incomplete one. Outputs produced under the earlier classification scheme must be regenerated in fresh directories.
 
 ## Eight characteristics
 
@@ -61,7 +61,7 @@ runs/experiment4_uniform/   # or experiment4_zipf/
 
 The two prompts use the same single-workload objective, original structural samples, model settings, reference positions, budget and candidate constraints; the only textual addition to the profiled arm is the statistical profile and its definitions. Historical scores from the old hashing version are deliberately omitted in both. A matched control matters because Experiment 3 optimized both workloads jointly; a comparison only against its historic AI proposals would confound profiling with the workload-specific objective. The current FNV-1a/mix hashing description is used, not the historical base-257 mapping description.
 
-Preparation makes no API calls. The existing Experiment 3 generate/freeze/evaluate commands assume two workloads and a different config format: do not pass Experiment 4 folders to those commands. Later integration should evaluate both arms and random controls on the same original full query file for the selected workload, with P=8000, 512B, seed 55, zero false negatives, and matched candidate length distributions. Keep full-data Experiment 3 results as historical reference only.
+Preparation makes no API calls. The existing Experiment 3 generate/freeze/evaluate commands assume two workloads and a different config format: do not pass Experiment 4 folders to those commands. This exploratory evaluation compares profiled AI with Oracle, optimized Bloom, and the best historical Experiment 3 AI for the selected workload. Control generation is optional; no new random candidates are generated. Because both workload-specific prompting and profile information changed, do not attribute the entire observed difference to the profile alone.
 
 ## AI generation
 
@@ -69,14 +69,37 @@ Use your existing prepared run directories without rerunning prepare. Set ANTHRO
 
 ```bash
 python3 scripts/experiment4.py generate --out runs/experiment4_uniform --arm profiled
-python3 scripts/experiment4.py generate --out runs/experiment4_uniform --arm control
 python3 scripts/experiment4.py generate --out runs/experiment4_zipf --arm profiled
-python3 scripts/experiment4.py generate --out runs/experiment4_zipf --arm control
 ```
 
-The profiled arm uses prompt.md and control uses prompt_control.md. Use one fresh conversation per request; do not give evaluator feedback. The generation command verifies the prepared artifact hashes and reuses Experiment 3 candidate validation. Both arms use the same model, effort and candidate constraints. If a model override is needed, use the same --model value for every arm and workload; the actual model returned by the API is also recorded. Optional --call 2 (and subsequent positive numbers) makes an independent repeat. Unpinned runs require explicit --allow-unpinned.
+The profiled arm uses prompt.md. The optional control arm uses prompt_control.md; it is not required by the current evaluation. Use one fresh conversation per request; do not give evaluator feedback. The generation command verifies the prepared artifact hashes and reuses Experiment 3 candidate validation. Both arms use the same model, effort and candidate constraints. If a model override is needed, use the same --model value for every arm and workload; the actual model returned by the API is also recorded. Optional --call 2 (and subsequent positive numbers) makes an independent repeat. Unpinned runs require explicit --allow-unpinned.
 
-Each request reserves ai/<arm>/call_<n>/ and records request.json before contacting the API. Successful calls also save api_raw.json, response.json, validated_candidates.json and generation.json (actual model, token usage, wall time and hashes). A repeated call number is rejected to prevent accidental paid duplicate requests. Incomplete or invalid responses are preserved, not silently retried; inspect the raw response and use a new call number for any intentional retry, retaining the original attempt. No credentials are written to disk by the script. Candidate evaluation remains a separate future step.
+Each request reserves ai/<arm>/call_<n>/ and records request.json before contacting the API. Successful calls also save api_raw.json, response.json, validated_candidates.json and generation.json (actual model, token usage, wall time and hashes). A repeated call number is rejected to prevent accidental paid duplicate requests. Incomplete or invalid responses are preserved, not silently retried; inspect the raw response and use a new call number for any intentional retry, retaining the original attempt. No credentials are written to disk by the script. ## Evaluation (no AI call)
+
+Use the existing generated profiled response. JDK 21 and the Gradle wrapper are required.
+
+```bash
+python3 scripts/experiment4.py evaluate --out runs/experiment4_uniform
+python3 scripts/experiment4.py evaluate --out runs/experiment4_zipf
+```
+
+The evaluate command automatically freezes the 12 existing profiled proposals, selects the maximum pruning_pct among AI rows for the selected workload from runs/experiment3_unified_hashing/proposal_results.csv, and evaluates the historical best, all profiled proposals, Oracle and optimized Bloom. No AI Control response, Random, reference map or API key is required. The Java evaluator reads only the selected full query file. Input hashes, historical settings and the response provenance are checked. Historical best retained counts must match the new replay exactly. Nominal BPK is 0.512, P=8000, budget=512B, seed=55. The four groups produce 15 rows per workload. All AI proposals are preserved even if a profiled combination matches the historical best.
+
+Use --call N for a different existing profiled response. Default input file paths are read from config.json; override relocated files with --dataset-file and --query-file (hashes must match). --historical-run changes the directory containing historical config.json, runtime.json and proposal_results.csv. --heap 8g adjusts the Java heap. --eval-out selects a fresh destination if repeating evaluation; existing outputs are not overwritten. No prepare or generate rerun is needed.
+
+```text
+runs/experiment4_uniform/evaluation/profiled/call_1/
+  frozen.json
+  designs.tsv
+  runtime.json
+  benchmark/results.csv
+  benchmark/*.bin
+  results.csv
+  summary.json
+  report.md
+```
+
+results.csv includes all original evaluator metrics, candidate reasons, historical reference score, and deltas versus Bloom and Experiment 3 best. summary.json and report.md summarize best, mean, median, and counts above baselines. Historical best is selected post hoc; the comparison is in-sample and exploratory. The optional control prompt remains available for a later matched experiment.
 
 ## Test
 
@@ -84,4 +107,4 @@ Each request reserves ai/<arm>/call_<n>/ and records request.json before contact
 python3 -m unittest discover -s scripts -p 'test_experiment4.py' -v
 ```
 
-Tests exercise raw structural categories, frequency-weighted statistics, full occurrence counting, independent prompts, and output hashes using synthetic fixtures; the full Shalla files are not required. Full runs retain the dataset membership set and selected full-workload query Counter in memory; no duplicate query files are written. Measure actual runtime and memory on the real data. Generated files are ignored by Git under data/ and runs/.
+Tests exercise raw structural categories, frequency-weighted statistics, full occurrence counting, independent prompts, output hashes, mocked API generation, and profiled-only evaluation orchestration using synthetic fixtures; the full Shalla files are not required. Full runs retain the dataset membership set and selected full-workload query Counter in memory; no duplicate query files are written. Measure actual runtime and memory on the real data. Generated files are ignored by Git under data/ and runs/.
