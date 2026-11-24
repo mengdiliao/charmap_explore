@@ -1,5 +1,6 @@
 """Offline regression tests for Experiment 4 (stdlib unittest)."""
 import argparse
+import csv
 import json
 import io
 from pathlib import Path
@@ -148,6 +149,71 @@ class Experiment4Test(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"Prepared artifact changed"):
                 e4.generate(argparse.Namespace(out=dest,arm="profiled",call=2,model=None,allow_unpinned=True))
             self.assertEqual(len(requests),2)
+
+    def test_profiled_only_evaluation(self):
+        dest = self.root/"eval_run"
+        e4.prepare(self.args("zipf",dest))
+        combos = [[0,1,2,i] for i in range(3,11)] + [[1,2],[1,2,3],[1,2,3,4,5],[1,2,3,4,5,6]]
+        response = {"candidates":[{"positions":p,"reason":"Fixture"} for p in combos]}
+        raw = {"model":"fixture","stop_reason":"end_turn","usage":{},
+               "content":[{"type":"text","text":json.dumps(response)}]}
+        with patch.dict("os.environ",{"ANTHROPIC_API_KEY":"fixture"}), patch.object(
+                e4,"urlopen",return_value=io.BytesIO(json.dumps(raw).encode())):
+            e4.generate(argparse.Namespace(out=dest,arm="profiled",call=1,model="fixture",allow_unpinned=True))
+        cfg = e4.prepared_config(dest)
+        old = self.root/"historical"
+        old.mkdir()
+        e4.save(old/"config.json",{
+            "partition_size":8000,"budget":512,"partition_seed":55,
+            "input_sha256":{"dataset.txt":e4.digest(self.data),"queries_zipf.txt":e4.digest(self.zipf)}
+        })
+        e4.save(old/"runtime.json",{"hash_version":cfg["hash_version"]})
+        fields = ["workload","group","proposal_id","positions","reason","partition_size","budget_bytes",
+                  "queries","false_negatives","pruning_pct","dataset_rows","partitions","global_positive","retained"]
+        rows = [
+            ["zipf","AI","A1_01","0;1;-5;-1","old",8000,512,10,0,20,7,1,8,8],
+            ["zipf","AI","A1_02","0;2","old",8000,512,10,0,10,7,1,8,9],
+            ["zipf","Random","R1_01","0;3","",8000,512,10,0,99,7,1,8,8],
+            ["uniform","AI","A1_03","0;4","",8000,512,10,0,99,7,1,8,8],
+        ]
+        with (old/"proposal_results.csv").open("w",newline="") as f:
+            writer=csv.writer(f)
+            writer.writerow(fields)
+            writer.writerows(rows)
+        args=argparse.Namespace(out=dest,call=1,historical_run=old,dataset_file=None,
+                                query_file=None,eval_out=None,heap="4g")
+        frozen=e4.frozen_candidates(dest,cfg,1,old)
+        self.assertEqual(frozen["designs"][0]["proposal_id"],"A1_01")
+        self.assertEqual(len(frozen["designs"]),13)
+        def mock_evaluator(command,cwd,check):
+            self.assertIn("-Pworkload=zipf",command)
+            self.assertIn("-PqueryFile="+str(self.zipf.resolve()),command)
+            out=Path(next(x.split("=",1)[1] for x in command if x.startswith("-PoutputDir=")))
+            out.mkdir()
+            result_fields=["workload","algorithm","positions","partition_size","budget_bytes","queries",
+                           "false_negatives","pruning_pct","dataset_rows","partitions","global_positive","retained"]
+            with (out/"results.csv").open("w",newline="") as f:
+                writer=csv.writer(f)
+                writer.writerow(result_fields)
+                writer.writerows([["zipf","Oracle","",8000,512,10,0,20,7,1,8,8],
+                                  ["zipf","OptimizedBloom","",8000,512,10,0,10,7,1,8,9]])
+                for d in frozen["designs"]:
+                    writer.writerow(["zipf",d["algorithm"],";".join(map(str,d["positions"])),
+                                     8000,512,10,0,20,7,1,8,8])
+        with patch.object(e4.subprocess,"run",side_effect=mock_evaluator):
+            e4.evaluate(args)
+        result=dest/"evaluation/profiled/call_1"
+        with (result/"results.csv").open(newline="") as f:
+            report=list(csv.DictReader(f))
+        self.assertEqual(len(report),15)
+        self.assertEqual(e4.Counter(r["group"] for r in report),
+                         {"Oracle":1,"OptimizedBloom":1,"Experiment3BestAI":1,"Experiment4ProfiledAI":12})
+        self.assertFalse((dest/"ai/control").exists())
+        self.assertEqual(json.loads((result/"summary.json").read_text())["experiment4_candidate_count"],12)
+        # The input provenance check must reject changed query data before running Gradle.
+        self.zipf.write_text("different.com\n")
+        with self.assertRaisesRegex(ValueError,"Input differs"):
+            e4.evaluate(args)
 
     def test_bucket_boundaries_and_ties(self):
         keys = e4.Counter({4:1,7:1,8:1,11:1,12:1,15:1,16:1,19:1,20:1,23:1,24:1,31:1,32:1,124:1})
