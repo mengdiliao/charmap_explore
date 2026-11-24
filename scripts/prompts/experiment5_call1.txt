@@ -1,0 +1,32 @@
+# Experiment 5 — First AI call: autonomous characteristic extraction
+
+You are writing a standalone Python 3 program, not designing a statistic yet. Decide independently which dataset and workload characteristics would be most useful for selecting character positions in a Joint Character Map for equality partition pruning.
+
+## Mechanism and objective
+
+Each partition contains string keys and has one fixed-size bitmap. For every key, extract the ordered symbols at the selected positions; nonnegative indices are zero-based from the start, negative indices count from the end (-1 is last). An out-of-range position returns symbol 128, distinct from ASCII. Hash the sequence of symbols with FNV-1a, mix once and use unsigned modulo bitmap capacity to set one bit. The query uses the same projection and mapping; an unset bit safely prunes the partition, a set bit retains it. False positives are allowed, false negatives are not. Optimize overall frequency-weighted pruning for the selected target workload only.
+
+The downstream model will choose exactly 12 unique canonical position combinations excluding [0,1,-2,-1]. Eight have four positions; the other four have length 2, 3, 5 or 6. Allowed positions are 0..15 and -16..-1; no duplicates. Canonical order is nonnegative ascending, then negative ascending. Each candidate uses one map and the entire payload budget. Hash scheme: fnv1a-mix-v1.
+
+## Inputs and configuration
+
+Dataset: Shalla-style ASCII URL/domain collection, including IP addresses.
+Stored keys: $dataset_count unique keys.
+Target workload: $workload_label; $query_count query occurrences.
+Partition size: $partition_size keys; seed: $partition_seed; budget: $budget_bytes bytes; bitmap capacity: $bitmap_bits bits.
+
+Both inputs are ASCII text, one raw key per line (case and spaces are significant). The dataset provided to your program is **already shuffled in the exact benchmark partition order** by the trusted experiment driver; consecutive groups of partition-size keys form partitions, including a possibly shorter final partition. Do not shuffle it again. The workload contains all query occurrences, including duplicates and both present and absent keys; preserve occurrence weights. No holdout. A positive query means exact global dataset membership, not membership in every partition.
+
+## Requirements
+
+Extract exactly four distinct dataset characteristic types and four distinct workload characteristic types. Choose what to measure and how to compute it independently. A type may be a compact distribution or table of one property. Dataset characteristics derive from stored keys; workload characteristics may also describe their relationship to stored keys. Do not bundle unrelated properties to circumvent the limit. Make each property interpretable and useful for downstream selection. Sampling is allowed if deterministic; disclose sample size, method and seed in its description.
+
+Descriptive analysis of individual positions, relationships among positions and partition-level properties is allowed. You may compute indirect indicators but must not construct or evaluate candidate maps, simulate pruning, compute exact candidate pruning performance (including an equivalent calculation), exhaustively or iteratively search for best designs, rank solutions by pruning performance, or output recommended combinations as solutions. Do not turn profiling into a proxy optimizer that systematically searches the full candidate space. No benchmark code, prior results, external resources, subprocesses or network. Do not modify inputs.
+
+## Program contract
+
+Return executable Python 3 source only, without Markdown fences or external explanation. Use only the standard library. No interactive input or additional AI calls. Read only the two specified inputs and write only the specified output. Be deterministic and practical for millions of keys and queries. The trusted driver invokes:
+
+python3 extract_characteristics.py --dataset dataset.txt --workload queries.txt --partition-size $partition_size --budget-bytes $budget_bytes --output characteristics.json
+
+Produce UTF-8 JSON with exactly two top-level keys: dataset_characteristics and workload_characteristics. Each must be an array of exactly four objects, each containing exactly name (unique nonempty string), description (nonempty definition with units, method and interpretation as relevant), and values (compact JSON data, no NaN or Infinity). No raw data dumps, full candidate lists or candidate evaluation scores. Maximum output file size: $max_profile_bytes UTF-8 bytes, including formatting. Keep the output compact enough to be inserted directly into a later independent AI prompt. The driver will save your source for manual review before execution; it will not call the design model in this stage.
