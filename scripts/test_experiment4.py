@@ -1,9 +1,11 @@
 """Offline regression tests for Experiment 4 (stdlib unittest)."""
 import argparse
 import json
+import io
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import experiment4 as e4
 
@@ -113,6 +115,39 @@ class Experiment4Test(unittest.TestCase):
         empty.touch()
         with self.assertRaisesRegex(ValueError,"Empty workload"):
             e4.query_frequencies(empty)
+
+    def test_generate_arms_and_validate(self):
+        dest = self.root/"generated"
+        e4.prepare(self.args("zipf",dest))
+        combos = [[0,1,2,i] for i in range(3,11)] + [[1,2],[1,2,3],[1,2,3,4,5],[1,2,3,4,5,6]]
+        raw = {"model":"fixture-model","stop_reason":"end_turn",
+               "usage":{"input_tokens":100,"output_tokens":200},
+               "content":[{"type":"text","text":json.dumps({"candidates":[
+                   {"positions":p,"reason":"Fixture"} for p in combos]})}]}
+        requests = []
+        def fake(req, timeout):
+            requests.append(json.loads(req.data))
+            return io.BytesIO(json.dumps(raw).encode())
+        with patch.dict("os.environ", {"ANTHROPIC_API_KEY":"fixture-key"}), patch.object(e4,"urlopen",side_effect=fake):
+            for arm in ("profiled","control"):
+                args = argparse.Namespace(out=dest,arm=arm,call=1,model="fixture-model",allow_unpinned=True)
+                e4.generate(args)
+                run = dest/"ai"/arm/"call_1"
+                self.assertEqual(len(json.loads((run/"validated_candidates.json").read_text())["candidates"]),12)
+                meta = json.loads((run/"generation.json").read_text())
+                self.assertEqual(meta["returned_model"],"fixture-model")
+                self.assertEqual(meta["usage"]["input_tokens"],100)
+                self.assertEqual(meta["response_sha256"],e4.digest(run/"response.json"))
+                self.assertNotIn("fixture-key",(run/"request.json").read_text())
+                with self.assertRaises(FileExistsError):
+                    e4.generate(args)
+            self.assertEqual(len(requests),2)
+            for body,arm in zip(requests,("profiled","control")):
+                self.assertEqual(body["messages"][0]["content"],(dest/e4.ARMS[arm]).read_text())
+            (dest/"prompt.md").write_text("tampered")
+            with self.assertRaisesRegex(ValueError,"Prepared artifact changed"):
+                e4.generate(argparse.Namespace(out=dest,arm="profiled",call=2,model=None,allow_unpinned=True))
+            self.assertEqual(len(requests),2)
 
     def test_bucket_boundaries_and_ties(self):
         keys = e4.Counter({4:1,7:1,8:1,11:1,12:1,15:1,16:1,19:1,20:1,23:1,24:1,31:1,32:1,124:1})
