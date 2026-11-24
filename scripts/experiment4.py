@@ -2,13 +2,13 @@
 """Experiment 4: offline descriptive profiling and workload-specific prompts."""
 import argparse
 from collections import Counter
-import hashlib
 import heapq
 import ipaddress
 import json
 from pathlib import Path
 import random
 import re
+import shutil
 import time
 
 from experiment3 import EXPECTED, HASH_VERSION, MODEL, ROOT, digest
@@ -285,7 +285,9 @@ def prepare(args):
     dataset_elapsed = time.perf_counter()-start
     freq, holdout = split_queries(query,args.out,args.holdout_fraction,args.split_seed)
     ql, wp = workload_profile(freq,keys,psl)
-    first = 0 if min(min(dl),min(ql)) < 4 else 4
+    first = args.first_length_bucket
+    if min(min(dl), min(ql)) < first:
+        raise ValueError("Length below first bucket; rerun BOTH workloads with --first-length-bucket 0")
     dp["length_distribution"], wp["length_distribution"] = lengths(dl,first), lengths(ql,first)
     # Include zero-count Other in both tables if it occurs on either side.
     if "other" in dp["category_distribution"] or "other" in wp["category_distribution"]:
@@ -297,10 +299,11 @@ def prepare(args):
     save(args.out/"workload_profile.json",wp)
     save(args.out/"prompt_profile.json",profile)
     save(args.out/"examples.json",examples)
+    shutil.copyfile(args.psl,args.out/"public_suffix_list.dat")
     (args.out/"prompt.md").write_text(render_prompt(args.workload,dp,wp,examples,profile),encoding="utf-8")
     (args.out/"prompt_control.md").write_text(render_prompt(args.workload,dp,wp,examples),encoding="utf-8")
     outputs = ("dataset_profile.json","workload_profile.json","prompt_profile.json","examples.json",
-               "prompt.md","prompt_control.md","queries_train.txt","queries_holdout.txt")
+               "prompt.md","prompt_control.md","queries_train.txt","queries_holdout.txt","public_suffix_list.dat")
     config = {
         "experiment":4,"stage":"prepare_only","workload":args.workload,
         "model":MODEL,"effort":"high","max_tokens":16000,"candidates_per_call":12,
@@ -333,6 +336,7 @@ def main():
     parser.add_argument("--out",required=True,type=Path)
     parser.add_argument("--holdout-fraction",type=float,default=0.2)
     parser.add_argument("--split-seed",type=int,default=155)
+    parser.add_argument("--first-length-bucket",type=int,choices=[0,4],default=4)
     parser.add_argument("--allow-unpinned",action="store_true",help="Explicit opt-in for custom data or fixtures")
     args = parser.parse_args()
     prepare(args)
