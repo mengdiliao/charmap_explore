@@ -7,28 +7,11 @@ import unittest
 
 import experiment4 as e4
 
-PSL = """// ===BEGIN ICANN DOMAINS===
-com
-uk
-co.uk
-ck
-*.ck
-!www.ck
-// ===END ICANN DOMAINS===
-// ===BEGIN PRIVATE DOMAINS===
-blogspot.com
-// ===END PRIVATE DOMAINS===
-"""
-
-
 class Experiment4Test(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        self.psl_path = self.root/"psl.dat"
-        self.psl_path.write_text(PSL)
-        self.psl = e4.PublicSuffixList(self.psl_path)
         self.keys = ["1.2.3.4","example.com","www.example.com","blog.example.com",
                      "www.blog.example.com","example.co.uk","odd/path"]
         self.data = self.root/"dataset.txt"
@@ -41,41 +24,43 @@ class Experiment4Test(unittest.TestCase):
         self.zipf.write_text("example.com\n"*7+"missing.com\n"*2+"odd/path\n")
 
     def test_category_partition(self):
-        self.assertEqual([self.psl.category(k) for k in self.keys],
-                         ["ipv4","plain_domain","www_domain","subdomain_without_www",
-                          "subdomain_with_www","plain_domain","other"])
+        self.assertEqual([e4.category(k) for k in self.keys],
+                         ["ipv4","non_www_single_dot","www_simple","non_www_multiple_dots",
+                          "www_complex","non_www_multiple_dots","other"])
         for key, expected in [
-            ("example.co.uk","plain_domain"),("www.example.co.uk","www_domain"),
-            ("www.blog.example.co.uk","subdomain_with_www"),
-            ("a.b.ck","plain_domain"),("www.ck","plain_domain"),
-            ("www.www.ck","www_domain"),("blog.blogspot.com","subdomain_without_www"),
-            ("www.com","plain_domain"),("999.2.3.4","other"),
-            ("WWW.Example.COM.","www_domain"),("co.uk","other"),
-            ("foo.www.example.com","subdomain_without_www")]:
-            self.assertEqual(self.psl.category(key),expected,key)
+            ("example.co.uk","non_www_multiple_dots"),("blog.example.com","non_www_multiple_dots"),
+            ("www.example.co.uk","www_complex"),("www.blog.example.com","www_complex"),
+            ("www.com","www_simple"),("co.uk","non_www_single_dot"),
+            ("999.2.3.4","other"),("192.0.2.1","ipv4"),
+            ("WWW.Example.COM","non_www_multiple_dots"),("www.example.com.","other"),
+            ("foo.www.example.com","non_www_multiple_dots"),("localhost","other"),
+            ("www..example.com","other"),("https://example.com","other"),
+            ("a_b.com","other"),("2001:db8::1","other")]:
+            self.assertEqual(e4.category(key),expected,key)
 
     def test_profile_counts(self):
-        keys, lens, dp = e4.dataset_profile(self.data,self.psl)
+        keys, lens, dp = e4.dataset_profile(self.data)
         self.assertEqual(sum(v["count"] for v in dp["category_distribution"].values()),7)
-        self.assertEqual(dp["category_distribution"]["plain_domain"]["count"],2)
+        self.assertEqual(dp["category_distribution"]["non_www_single_dot"]["count"],1)
+        self.assertEqual(dp["category_distribution"]["non_www_multiple_dots"]["count"],2)
         self.assertEqual([row["prefix"] for row in dp["top5_prefixes"][:2]],["exa","www"])
         self.assertEqual([row["count"] for row in dp["top5_prefixes"][:2]],[2,2])
         self.assertEqual(dp["top5_suffixes"][0]["suffix"],"com")
         self.assertEqual(sum(v["count"] for v in e4.lengths(lens,4).values()),7)
         q = e4.Counter({"example.com":7,"missing.com":2,"odd/path":1})
-        ql, wp = e4.workload_profile(q,keys,self.psl)
+        ql, wp = e4.workload_profile(q,keys)
         self.assertEqual(wp["global_positive_pct"],80)
-        self.assertEqual(wp["positive_rate_by_category"]["plain_domain"]["pct"],77.7778)
+        self.assertEqual(wp["positive_rate_by_category"]["non_www_single_dot"]["pct"],77.7778)
         self.assertIsNone(wp["positive_rate_by_category"]["ipv4"]["pct"])
         self.assertEqual(wp["top10_frequent_keys"][0],
                          {"key":"example.com","count":7,"pct":70.0,"positive":True})
         self.assertEqual(sum(v["count"] for v in e4.lengths(ql,4).values()),10)
 
-    def args(self, name, dest, fraction=0):
+    def args(self, name, dest):
         return argparse.Namespace(dataset_file=self.data, data=self.root,
             query_file=self.uniform if name=="uniform" else self.zipf,
-            workload=name, psl=self.psl_path, examples=self.examples, out=dest,
-            allow_unpinned=True, holdout_fraction=fraction, split_seed=155,
+            workload=name, examples=self.examples, out=dest,
+            allow_unpinned=True,
             first_length_bucket=4)
 
     def test_independent_prompts_and_manifest(self):
@@ -99,24 +84,35 @@ class Experiment4Test(unittest.TestCase):
             self.assertNotIn("missing.com",control)
             if name=="uniform":
                 self.assertNotIn("missing.com",prompt)
-            self.assertEqual((dest/"queries_holdout.txt").read_text(),"")
+            self.assertEqual(cfg["query_occurrences"],4 if name=="uniform" else 10)
+            self.assertEqual(cfg["evaluation_scope"],"full_selected_workload_in_sample")
+            self.assertEqual(cfg["category_version"],"raw-www-dot-count-v1")
+            self.assertEqual(set(p.name for p in dest.iterdir()), {
+                "dataset_profile.json","workload_profile.json","prompt_profile.json",
+                "examples.json","prompt.md","prompt_control.md","config.json"})
+            self.assertIn("full workload has",prompt)
+            self.assertIn("non_www_multiple_dots",prompt)
+            self.assertNotIn("non_www_multiple_dots",control)
+            self.assertNotIn("training",prompt)
+            self.assertNotIn("public suffix",prompt)
+            self.assertEqual(sum(row["count"] for row in json.loads(
+                (dest/"workload_profile.json").read_text())["category_distribution"].values()),
+                cfg["query_occurrences"])
             with self.assertRaises(FileExistsError):
                 e4.prepare(args)
         self.assertEqual((self.root/"uniform/dataset_profile.json").read_text(),
                          (self.root/"zipf/dataset_profile.json").read_text())
 
-    def test_occurrence_split_reproducible(self):
+    def test_full_occurrences_and_empty_workload(self):
         src = self.root/"repeat.txt"
         src.write_text("example.com\n"*100+"new.com\n"*100)
-        a,b = self.root/"a",self.root/"b"
-        for dest in (a,b):
-            dest.mkdir()
-            freq,n = e4.split_queries(src,dest,.2,155)
-            self.assertEqual(sum(freq.values())+n,200)
-            self.assertGreater(n,0)
-            self.assertGreater(freq["example.com"],0)
-        for name in ("queries_train.txt","queries_holdout.txt"):
-            self.assertEqual((a/name).read_bytes(),(b/name).read_bytes())
+        before = e4.digest(src)
+        self.assertEqual(e4.query_frequencies(src),{"example.com":100,"new.com":100})
+        self.assertEqual(e4.digest(src),before)
+        empty = self.root/"empty.txt"
+        empty.touch()
+        with self.assertRaisesRegex(ValueError,"Empty workload"):
+            e4.query_frequencies(empty)
 
     def test_bucket_boundaries_and_ties(self):
         keys = e4.Counter({4:1,7:1,8:1,11:1,12:1,15:1,16:1,19:1,20:1,23:1,24:1,31:1,32:1,124:1})
