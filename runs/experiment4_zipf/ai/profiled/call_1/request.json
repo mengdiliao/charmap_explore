@@ -1,0 +1,11 @@
+{
+  "workload": "zipf",
+  "arm": "profiled",
+  "call": 1,
+  "prompt_file": "prompt.md",
+  "prompt_sha256": "6a131cb8942d0856aab6117081cf2bd176c6459d83fab147577b1dd1fd7db64e",
+  "prepared_config_sha256": "71d8940f13c4dfffb554637eb7d3837da75a50b98be0c983eee43af2370c954e",
+  "model": "claude-opus-5-5",
+  "effort": "high",
+  "max_tokens": 16000
+}

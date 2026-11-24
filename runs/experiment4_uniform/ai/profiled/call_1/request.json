@@ -1,0 +1,11 @@
+{
+  "workload": "uniform",
+  "arm": "profiled",
+  "call": 1,
+  "prompt_file": "prompt.md",
+  "prompt_sha256": "5ca682087b5a797ce99546e62fc1ac5873644b75a6e5e5e0a4bfbc5f5b408491",
+  "prepared_config_sha256": "5322c18826969c187c55e4e118cae64eb783733eddf92012d5fec547f99172fd",
+  "model": "claude-opus-5-5",
+  "effort": "high",
+  "max_tokens": 16000
+}

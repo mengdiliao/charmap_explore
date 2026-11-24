@@ -1,0 +1,38 @@
+{
+  "model": "claude-opus-5-5",
+  "id": "msg_011ChNAGUt9y3WAFvXB4jxxe",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "thinking",
+      "thinking": "",
+      "signature": "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"
+    },
+    {
+      "type": "text",
+      "text": "{\"candidates\":[{\"positions\":[4,5,-6,-5],\"reason\":\"Skips the www. prefix and the common .com tail to use high-entropy name characters.\"},{\"positions\":[4,6,-7,-5],\"reason\":\"Spaced interior characters reduce correlation between adjacent letters.\"},{\"positions\":[5,6,-6,-5],\"reason\":\"Shifts the start window past common first letters while keeping the name-end characters.\"},{\"positions\":[4,5,6,-5],\"reason\":\"Three post-prefix characters plus the last name character before a typical TLD.\"},{\"positions\":[4,7,-6,-5],\"reason\":\"Wider start spacing adds discrimination across varied name lengths.\"},{\"positions\":[0,5,-6,-5],\"reason\":\"Position 0 is informative for non-www keys, and the other positions avoid the shared tail.\"},{\"positions\":[4,5,-8,-5],\"reason\":\"Deeper end offset captures name characters before longer suffixes.\"},{\"positions\":[5,7,-7,-6],\"reason\":\"Offset interior picks avoid both the prefix and the suffix structural constants.\"},{\"positions\":[4,5,6,-7,-6,-5],\"reason\":\"Six high-entropy positions maximize distinct projections at about 366 keys per partition.\"},{\"positions\":[4,5,-6,-5,-1],\"reason\":\"Adds the final TLD character to separate otherwise similar names.\"},{\"positions\":[0,4,5,-6,-5],\"reason\":\"Combines the first character of non-www keys with interior name characters.\"},{\"positions\":[4,6,-5],\"reason\":\"Compact three-position projection that still avoids structural constants.\"}]}"
+    }
+  ],
+  "container": null,
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "stop_details": null,
+  "usage": {
+    "input_tokens": 2213,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 1666,
+    "output_tokens_details": {
+      "thinking_tokens": 1110
+    },
+    "service_tier": "standard",
+    "inference_geo": "global",
+    "speed": "standard"
+  },
+  "diagnostics": null
+}

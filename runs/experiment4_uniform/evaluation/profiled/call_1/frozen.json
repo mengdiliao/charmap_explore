@@ -1,0 +1,240 @@
+{
+  "workload": "uniform",
+  "call": 1,
+  "generation": {
+    "workload": "uniform",
+    "arm": "profiled",
+    "call": 1,
+    "prompt_file": "prompt.md",
+    "prompt_sha256": "5ca682087b5a797ce99546e62fc1ac5873644b75a6e5e5e0a4bfbc5f5b408491",
+    "prepared_config_sha256": "5322c18826969c187c55e4e118cae64eb783733eddf92012d5fec547f99172fd",
+    "model": "claude-opus-5-5",
+    "effort": "high",
+    "max_tokens": 16000,
+    "returned_model": "claude-opus-5-5",
+    "usage": {
+      "input_tokens": 2213,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "cache_creation": {
+        "ephemeral_5m_input_tokens": 0,
+        "ephemeral_1h_input_tokens": 0
+      },
+      "output_tokens": 1666,
+      "output_tokens_details": {
+        "thinking_tokens": 1110
+      },
+      "service_tier": "standard",
+      "inference_geo": "global",
+      "speed": "standard"
+    },
+    "elapsed_seconds": 17.327,
+    "response_sha256": "7081bef1e97f61cb46f023475cfa7587e1af9af2681aab8caa40812cdcd64ed4",
+    "validated_candidates_sha256": "f08773c4641a23a3626113ec409c6e46b1db90b69849c41efaf6bdd8a4654d4a",
+    "candidate_count": 12
+  },
+  "historical_csv_sha256": "ae280115f884090cc5aa38c2309933189ee9ac79a460be53d31dc6dc0585f306",
+  "historical_config_sha256": "1ebcb115659daa3c92478d04f0dcc620ac591bc662de8b79189a6672f93a2f37",
+  "historical_best_row": {
+    "call": "1",
+    "group": "AI",
+    "proposal_id": "A1_04",
+    "positions": "0;1;-5;-1",
+    "reason": "Keeps the reference prefix but swaps the suffix 'o' for a name character.",
+    "algorithm": "CM_007",
+    "workload": "uniform",
+    "budget_bytes": "512",
+    "partition_size": "8000",
+    "partitions": "366",
+    "dataset_rows": "2926705",
+    "unique_stored": "2926705",
+    "nonascii_rows": "0",
+    "queries": "10000000",
+    "global_positive": "7493560",
+    "global_negative": "2506440",
+    "query_partition_pairs": "3660000000",
+    "oracle_retained": "7493560",
+    "retained": "2989244944",
+    "false_positive_pairs": "2981751384",
+    "false_negatives": "0",
+    "pruning_pct": "18.326640874",
+    "negative_pruning_pct": "28.565675476",
+    "metadata_total_bytes": "187465",
+    "bpk": "0.512426090",
+    "payload_used_bytes": "512",
+    "nominal_bpk": "0.512000000",
+    "partition_fpr_pct": "81.635759799",
+    "oracle_capture_pct": "18.364240201",
+    "retained_rows_pct": "81.674832508",
+    "components": "CM_007",
+    "mean_token_ndv": "3845.622950820",
+    "mean_saturation_pct": "60.949773736",
+    "collision_excess_pct": "35.081968145",
+    "exact_joint_pruning_pct": "46.965133634",
+    "bloom_k": "",
+    "delta_bloom_pp": "4.1760902999999985",
+    "delta_reference_pp": "3.9265013659999983"
+  },
+  "designs": [
+    {
+      "algorithm": "Experiment3BestAI",
+      "group": "Experiment3BestAI",
+      "proposal_id": "A1_04",
+      "positions": [
+        0,
+        1,
+        -5,
+        -1
+      ],
+      "reason": "Keeps the reference prefix but swaps the suffix 'o' for a name character.",
+      "historical_pruning_pct": 18.326640874
+    },
+    {
+      "algorithm": "E4_A01",
+      "group": "Experiment4ProfiledAI",
+      "proposal_id": "A01",
+      "positions": [
+        4,
+        5,
+        -6,
+        -5
+      ],
+      "reason": "Skips the www. prefix and the common .com tail to use high-entropy name characters."
+    },
+    {
+      "algorithm": "E4_A02",
+      "group": "Experiment4ProfiledAI",
+      "proposal_id": "A02",
+      "positions": [
+        4,
+        6,
+        -7,
+        -5
+      ],
+      "reason": "Spaced interior characters reduce correlation between adjacent letters."
+    },
+    {
+      "algorithm": "E4_A03",
+      "group": "Experiment4ProfiledAI",
+      "proposal_id": "A03",
+      "positions": [
+        5,
+        6,
+        -6,
+        -5
+      ],
+      "reason": "Shifts the start window past common first letters while keeping the name-end characters."
+    },
+    {
+      "algorithm": "E4_A04",
+      "group": "Experiment4ProfiledAI",
+      "proposal_id": "A04",
+      "positions": [
+        4,
+        5,
+        6,
+        -5
+      ],
+      "reason": "Three post-prefix characters plus the last name character before a typical TLD."
+    },
+    {
+      "algorithm": "E4_A05",
+      "group": "Experiment4ProfiledAI",
+      "proposal_id": "A05",
+      "positions": [
+        4,
+        7,
+        -6,
+        -5
+      ],
+      "reason": "Wider start spacing adds discrimination across varied name lengths."
+    },
+    {
+      "algorithm": "E4_A06",
+      "group": "Experiment4ProfiledAI",
+      "proposal_id": "A06",
+      "positions": [
+        0,
+        5,
+        -6,
+        -5
+      ],
+      "reason": "Position 0 is informative for non-www keys, and the other positions avoid the shared tail."
+    },
+    {
+      "algorithm": "E4_A07",
+      "group": "Experiment4ProfiledAI",
+      "proposal_id": "A07",
+      "positions": [
+        4,
+        5,
+        -8,
+        -5
+      ],
+      "reason": "Deeper end offset captures name characters before longer suffixes."
+    },
+    {
+      "algorithm": "E4_A08",
+      "group": "Experiment4ProfiledAI",
+      "proposal_id": "A08",
+      "positions": [
+        5,
+        7,
+        -7,
+        -6
+      ],
+      "reason": "Offset interior picks avoid both the prefix and the suffix structural constants."
+    },
+    {
+      "algorithm": "E4_A09",
+      "group": "Experiment4ProfiledAI",
+      "proposal_id": "A09",
+      "positions": [
+        4,
+        5,
+        6,
+        -7,
+        -6,
+        -5
+      ],
+      "reason": "Six high-entropy positions maximize distinct projections at about 366 keys per partition."
+    },
+    {
+      "algorithm": "E4_A10",
+      "group": "Experiment4ProfiledAI",
+      "proposal_id": "A10",
+      "positions": [
+        4,
+        5,
+        -6,
+        -5,
+        -1
+      ],
+      "reason": "Adds the final TLD character to separate otherwise similar names."
+    },
+    {
+      "algorithm": "E4_A11",
+      "group": "Experiment4ProfiledAI",
+      "proposal_id": "A11",
+      "positions": [
+        0,
+        4,
+        5,
+        -6,
+        -5
+      ],
+      "reason": "Combines the first character of non-www keys with interior name characters."
+    },
+    {
+      "algorithm": "E4_A12",
+      "group": "Experiment4ProfiledAI",
+      "proposal_id": "A12",
+      "positions": [
+        4,
+        6,
+        -5
+      ],
+      "reason": "Compact three-position projection that still avoids structural constants."
+    }
+  ]
+}

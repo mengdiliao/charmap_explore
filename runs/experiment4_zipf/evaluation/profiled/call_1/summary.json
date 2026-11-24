@@ -1,0 +1,17 @@
+{
+  "workload": "zipf",
+  "call": 1,
+  "oracle_pruning_pct": 99.742021038,
+  "bloom_pruning_pct": 14.518079426,
+  "experiment3_best_pruning_pct": 9.047968798,
+  "experiment3_best_proposal": "A1_03",
+  "experiment4_candidate_count": 12,
+  "experiment4_best": "A08",
+  "experiment4_best_pruning_pct": 16.86944623,
+  "experiment4_mean_pruning_pct": 12.7385748565,
+  "experiment4_median_pruning_pct": 12.326312485999999,
+  "experiment4_min_pruning_pct": 8.031586503,
+  "experiment4_above_bloom": 5,
+  "experiment4_above_experiment3_best": 10,
+  "best_delta_experiment3_pp": 7.821477432000002
+}

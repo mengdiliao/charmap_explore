@@ -1,0 +1,151 @@
+{
+  "dataset": {
+    "category_distribution_pct": {
+      "ipv4": 3.841,
+      "non_www_single_dot": 43.3661,
+      "non_www_multiple_dots": 11.0468,
+      "www_simple": 32.3719,
+      "www_complex": 9.3715,
+      "other": 0.0027
+    },
+    "length_summary": {
+      "min": 4,
+      "max": 124,
+      "mean": 18.8888,
+      "median": 18.0
+    },
+    "length_distribution_pct": {
+      "4-7": 0.5166,
+      "8-11": 6.6338,
+      "12-15": 24.7131,
+      "16-19": 28.0534,
+      "20-23": 20.3604,
+      "24-31": 16.1923,
+      "32+": 3.5304
+    },
+    "top5_prefixes": [
+      {
+        "prefix": "www",
+        "pct": 41.7812
+      },
+      {
+        "prefix": "sex",
+        "pct": 1.6028
+      },
+      {
+        "prefix": "por",
+        "pct": 0.9224
+      },
+      {
+        "prefix": "fre",
+        "pct": 0.8085
+      },
+      {
+        "prefix": "66.",
+        "pct": 0.756
+      }
+    ],
+    "top5_suffixes": [
+      {
+        "suffix": "com",
+        "pct": 53.0809
+      },
+      {
+        "suffix": ".de",
+        "pct": 6.3856
+      },
+      {
+        "suffix": "net",
+        "pct": 5.5934
+      },
+      {
+        "suffix": ".uk",
+        "pct": 3.8204
+      },
+      {
+        "suffix": "org",
+        "pct": 3.3251
+      }
+    ]
+  },
+  "workload": {
+    "category_distribution_pct": {
+      "ipv4": 2.8812,
+      "non_www_single_dot": 37.216,
+      "non_www_multiple_dots": 27.254,
+      "www_simple": 25.3705,
+      "www_complex": 7.2755,
+      "other": 0.0027
+    },
+    "positive_rate_by_category_pct": {
+      "ipv4": 100.0,
+      "non_www_single_dot": 87.2725,
+      "non_www_multiple_dots": 30.4152,
+      "www_simple": 95.671,
+      "www_complex": 96.3673,
+      "other": 80.9524
+    },
+    "top10_frequent_keys": [
+      {
+        "key": "increasemydick.com",
+        "pct": 0.0001,
+        "positive": true
+      },
+      {
+        "key": "littlelittlelittle.com",
+        "pct": 0.0001,
+        "positive": true
+      },
+      {
+        "key": "northmyrtlebeach-rental.com",
+        "pct": 0.0001,
+        "positive": true
+      },
+      {
+        "key": "russiangroupsex.com",
+        "pct": 0.0001,
+        "positive": true
+      },
+      {
+        "key": "sexe-entre-lesbienne.com",
+        "pct": 0.0001,
+        "positive": true
+      },
+      {
+        "key": "www.angelstudio.co.kr",
+        "pct": 0.0001,
+        "positive": true
+      },
+      {
+        "key": "www.beatthebookpodcast.com",
+        "pct": 0.0001,
+        "positive": true
+      },
+      {
+        "key": "3d-milf-toons.blogspot.com.br",
+        "pct": 0.0001,
+        "positive": true
+      },
+      {
+        "key": "3gqp8mua.com",
+        "pct": 0.0001,
+        "positive": true
+      },
+      {
+        "key": "64.157.9.102",
+        "pct": 0.0001,
+        "positive": true
+      }
+    ],
+    "top10_combined_share_pct": 0.0013,
+    "length_distribution_pct": {
+      "4-7": 0.5937,
+      "8-11": 6.7855,
+      "12-15": 22.3333,
+      "16-19": 25.3657,
+      "20-23": 19.2293,
+      "24-31": 17.5278,
+      "32+": 8.1646
+    }
+  }
+}

@@ -1,0 +1,150 @@
+{
+  "query_occurrences": 10000000,
+  "global_positive_count": 7493560,
+  "global_positive_pct": 74.9356,
+  "category_distribution": {
+    "ipv4": {
+      "count": 288122,
+      "pct": 2.8812
+    },
+    "non_www_single_dot": {
+      "count": 3721599,
+      "pct": 37.216
+    },
+    "non_www_multiple_dots": {
+      "count": 2725398,
+      "pct": 27.254
+    },
+    "www_simple": {
+      "count": 2537054,
+      "pct": 25.3705
+    },
+    "www_complex": {
+      "count": 727554,
+      "pct": 7.2755
+    },
+    "other": {
+      "count": 273,
+      "pct": 0.0027
+    }
+  },
+  "positive_rate_by_category": {
+    "ipv4": {
+      "positive_count": 288122,
+      "pct": 100.0
+    },
+    "non_www_single_dot": {
+      "positive_count": 3247934,
+      "pct": 87.2725
+    },
+    "non_www_multiple_dots": {
+      "positive_count": 828935,
+      "pct": 30.4152
+    },
+    "www_simple": {
+      "positive_count": 2427224,
+      "pct": 95.671
+    },
+    "www_complex": {
+      "positive_count": 701124,
+      "pct": 96.3673
+    },
+    "other": {
+      "positive_count": 221,
+      "pct": 80.9524
+    }
+  },
+  "top10_frequent_keys": [
+    {
+      "key": "increasemydick.com",
+      "count": 14,
+      "pct": 0.0001,
+      "positive": true
+    },
+    {
+      "key": "littlelittlelittle.com",
+      "count": 13,
+      "pct": 0.0001,
+      "positive": true
+    },
+    {
+      "key": "northmyrtlebeach-rental.com",
+      "count": 13,
+      "pct": 0.0001,
+      "positive": true
+    },
+    {
+      "key": "russiangroupsex.com",
+      "count": 13,
+      "pct": 0.0001,
+      "positive": true
+    },
+    {
+      "key": "sexe-entre-lesbienne.com",
+      "count": 13,
+      "pct": 0.0001,
+      "positive": true
+    },
+    {
+      "key": "www.angelstudio.co.kr",
+      "count": 13,
+      "pct": 0.0001,
+      "positive": true
+    },
+    {
+      "key": "www.beatthebookpodcast.com",
+      "count": 13,
+      "pct": 0.0001,
+      "positive": true
+    },
+    {
+      "key": "3d-milf-toons.blogspot.com.br",
+      "count": 12,
+      "pct": 0.0001,
+      "positive": true
+    },
+    {
+      "key": "3gqp8mua.com",
+      "count": 12,
+      "pct": 0.0001,
+      "positive": true
+    },
+    {
+      "key": "64.157.9.102",
+      "count": 12,
+      "pct": 0.0001,
+      "positive": true
+    }
+  ],
+  "top10_combined_share_pct": 0.0013,
+  "length_distribution": {
+    "4-7": {
+      "count": 59374,
+      "pct": 0.5937
+    },
+    "8-11": {
+      "count": 678553,
+      "pct": 6.7855
+    },
+    "12-15": {
+      "count": 2233335,
+      "pct": 22.3333
+    },
+    "16-19": {
+      "count": 2536566,
+      "pct": 25.3657
+    },
+    "20-23": {
+      "count": 1922930,
+      "pct": 19.2293
+    },
+    "24-31": {
+      "count": 1752779,
+      "pct": 17.5278
+    },
+    "32+": {
+      "count": 816463,
+      "pct": 8.1646
+    }
+  }
+}

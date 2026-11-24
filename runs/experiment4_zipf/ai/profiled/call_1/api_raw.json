@@ -1,0 +1,38 @@
+{
+  "model": "claude-opus-5-5",
+  "id": "msg_011ChNAV5iEbwr71nTWdStb3",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "thinking",
+      "thinking": "",
+      "signature": "CAQS1hwKEAgUGAI4AUIIdGhpbmtpbmcSDD0ogYvDpqi8ZzKtbBoMtxKmmOSJNPRrvOBEIjAdh5EdtAzV1RHGz5OKJ9lZeEGpLCfVxoiMM2x+QSKQBjRMKTxtvoxHlYKyMhLK8/0q8xt4gm3iMigr0me+tbMeO/mpp7ZoRPiYl65gtFY2aXBcY/WKPRR6EYvsx2K8/4YlCh8BbtCMvk/UBocYB1LoH4YWFxE/BmJ40wKVPSLNzOJYaZw3JRgIL5Ez5ZezeaX4QCdsdpdE950I1eTw8v8w4pxLi4oBvvYy7bQQa7fZAldQLuiSnjlOwFOQnKpDLdBZar+Kfsgar3YlXZ2pfqt8JQxUnynQs9wxrK+dQ2DtOYGpVj5lN/ssNSsdwF04yhS8hyTnrHiYLFvsLWIG09OPW15Et4WVpGlckU8tdioOom2EoGh5+Ior5RGpSRo1xTjSxc7RzsWGLfP1gPMJ8qeAwrlGhG++efunPG8DBK2OenYzFK6khalrRqjM0K7A9rrBuU2tSzhgDYiSDCelcarnwpoanzAeQ9sqjt6ewhDBMoljLtsstW7Y471ekrH7PpvYnhCW+ZrsetplexntCf4bT3p26eOPJWsST8hYWYaZmTGkCkBh7tmz0l2qRUOA+yIMCoBdA7xhDKEcvsdUvXg9yCnNjFPzQrxy2ZNGd8loLJg5G/QdA6n4bbOtzV3a1p1YR3MGzUPmBxnP5oZ7EOV3HXgUoMOj3j0d/KUHNdsOS8v/62xe2hnZxlJ45OOYPRYJGxcdRRvLLSEoFrH0aF4Dlq+Aeu5bUGEAMPOmbtclHkO3WZb7bzPBFR3ldzTR4CZmy4oZz71HwpnvAw4iSz6wd9Z9q5ivvtc2AfiqjvvbpHdG1HyR2fBzc8hebjFWmIu7Yj3cM4Rs9tNyDD6lB0M1nb+zIDtuZ+5jmX48rWFGOco7VIf8vI3bAB6z+aVtpbQs1GMtA+/2TbJHB3WcIBCBBHHRClQlYT4i2kBUgs/AvxpcQIhPFc+ufb+P7cKB5BbCzQv4iarkIFF3gciVBKpNrSrD/7lNXyUNkAUQC/3vreUXK6c97RXmGAk/pXmInW9d1h6izViOE8pH583FSvrbWDWhKcqtB8psL937cQdsfBe5ry8xf05Almrdf1N3sSqiITQl5GlSpufxFQFM+jzXNnjVaTk472amGHgMvRn149SMG52zmV5XC7ZdA137NzhI7eoFRliM3hG3bXAYXZQrN8exHWgQvZCOZ2sSQqM8F5z/UqJBnGWxucFt36qqKHs1bvfSEPP0KbCiBbuzIDsfSdDv2BtrXDrSRKq+lm+MIy1SLbGG0ZD/fMzF01g7mwVwWZv9r6SGEGkQoG2Nu6HckFc9zJIw9mUPLBxY+F09qrqz8FN53AAKuIAMWFkjP0+5z+lL/rHy5GJj7VYhuTGxVzUPa7J0EkM0eZBy2Xfc7OdQUneXRALxnmrLqZPrUssoow8ITws3A62RvSUwm8ziPGdCfL9EXkJTKYU1eV24jxUwyJH/GvGuZfwD2iVZjN7eEIITQgUuAFfWhbmSDNRUWxqPe9yca22u9LrnM+OMeAqlzXB5vYeMEYOdXvRPLx0Sd2nYz7FYC62yPkoNSbeMgtuWEwuKnO2KxxBvArGCdH1L5y6Aqzj/1dZXh9XLfWlgxok0JeLTqlikrqWK/r/wBd8KsYgL/SMB/hOl0D1Mk2y1JrhaJ+SOXXCknXvVKCF81vMlhfLM+BsmRjIHmlvaJjtFMRoGlmJGjQ7F1PaV9S4YojxQTKpoJgIHOXBTHeZy/rO8KDzqgI4ULCWRegZxvL/wjy5t6PGmi4x1MrhACgxzr6Z1KkMX10qd4/H+IdHLFb5NHGNtKvfAWmjf4+J0Xq3L9S7w+AjPbvgCzmukH9bY1whYOwmAc0o+zyB0E4NDOUPsLT31W1uWQs3KJBN4soNuXiIavoYfXxYs63bi8sdftmfhH7VodkU4gVhATzm3QnRsxZ1iS4nLxFv0Tg9oSB18CadPksCuhKn7uim20ECmYc3QtxIOvPuol4DeRgZ+Qk0KEQCY8YCImlloFzzTFxlC/fseEeoBR7tXIR8uOmf9Eku67KITzUt46p3e7aNFH+cVjxuhHEUuhwHKRoNGQldkXFZMy+dbqfvP7LtymZid6AtYbcO4J1srPW+kZF9Pa/uL6vv/+HEOaahHUFBXU3+CJMd4d94moD80pKFEd9joQYGiiKj8L8ndCp/ZIgojhVuiyHl67sGQ7F/Ihez6lhktszOH5WM1U2ATY/IHq0SctkHdSuTC00ULXLUU6KYh82RlsU7HfJvAR4avaF2qPg2fmKGA1k+PlSHUDL4eSw15quDSPVpcfGXUUpsjPAKG3qWHKTfYZexyToMLRZ0hk+vK4fpzVzWn2srEZ8m+qBbnScWKrN5e+E0zLi6hVA6rPZslxJ7VV610WxMmaaVNyDl4r0y0jHoOI0yQDX7Jd8fUwty67JLYswmpjbO+H/qHh572zXmIxAms8H93oKuO8ME7nQU58C7mSjyxtrrUayfHtzLLOIDYEFS6QihC1WS+Olk6mtgW8PswwOObEDqVWYiGjzxVFMO+tQdIvMlMy2cYcM3ThqLv7UWRFFSOOxGqLdvFbLAx3s/JU1Sg5uWLKMze09Sq/uWR2XTvBDNvZV3ND+3g77UOm4Xn+GLfGQJ7plNbbgYmR9BN9aczuzE3TqzoljZbx7T9CgPpfNDXPLCZLYIpFJMWdqXDOZu25Kbe2HoM4RlhlLG3xlHksQei+j1xAe9hazwBVXClgMfxek6hmkM28vcZa79nQGjn/pF9IGMNgd0oNBwTOEf+1XTpZZ5uPuk3tmnzko8maw95immtIKdBGCNCJtJRwAVKdB1mhvUwxoFfelnkY0dVwbTmHbn7XLPzxLdFY/1OGtKuBlYaOkjXrUv75YhcURpXrbjNclIyA+xdbSwAlghbd8Hgect0cXRCsaA2gV/WY1lOOBaNT6tc+zzzpZQ7zITKhBcSaohh5AynxB2amrE2ckS0/8ieryIX3eHY4Ku7bF1J0F74DuqlqiMVcoY9b74mSEvqXHhdhB7NwiQFRuALfp0O36gUVmSxQJ3hx7r06ee04ZPkKKgXgmgsO5mFMp70iaaWQ0gIcezDye2+Fi513vi721F826UKPY4DphrK/lZQ/h/Th0fFnXPyxs5Kz+7n+nnaWRSO5VL8JV3ptHsLIG8be3BN5QdDvK1n2jB2qxU8Q0Xg01oycw4LhceHHyfFzXzODxWcr7cd1C1/uctyQeo2cP3d61x2aKN68tm4g5nBiwqFKE2sutwOwdnLtBzFcQrC2BQ0pXta8vAJTxWqNKD0BB6FkzDt+jjl+j4BRRfGsXaVvZ2TaLANIDkROKT0+9Zd2KFIorFmOGlT3vwy6x8cNddQCRyONtiOUkB6rpPiFpdfx/nlcBBOS0aTwXCk4xwbWKY5jjakqn13i9V8FZ/9HhHDPU1WxlG2Fi2DnpQfioNozYpouGk3av/wUi7YT86Jncpw8oTdORR6tbCv8W8YHpijC1+dRxqKhbMMy2jqogiLfGKa1LAKvdgWa6HzIAO0QPNeQYu4d0F2L0rPLRmKTJnFIm0imQs3PI/mED5yEBMRkNVIOvdS0yFKTPet9E8raxoG4umHZBdFwyhHz9I3ykaeXCmAOBFemVcalSzn4SeCF73WqrBmkR5slbb9nQPNhKr91ZrCp/iCS+Q4MKOgVXypoK+Om04/NVQiVMNEaKO9J1P/OPul4cVYpZCt6KEIMRQqxuJEC6HWvB1oLl6IgP+jigg5zjaP2rAK6BxR0ulzpK9Eq2EowCQGs+Uh49bOe5OKB2d0HH8kdwzVk9M1RcGjCKg/a/IComtChaR6qkdEBfZkZYjAboq2DrY1ayLggL+knM5M6eIp7xDJF70QoCF1f+nW90raebxv0It3exbRR4tnB8KTtOM8IZPxKLM7TCLBfUF9rkX9Myr4zYIlFiIAhnjA92AhWCYTV9iVE48RfYGNq4tE1gLfLaLTRy1bNT9SyEjNcGHOyzXE4H0c2gNGiiK1nHXdXwwBAnC6ZpoaoIH8b9GQD8FKPiIqIfLLO2XpY31KzV/yfXAiU4cIf4AUffzpMP3VI7aF7kbsST7mRLM/uNtwyVDyrh8M8tYov4ZUYXRBtDS8l5uNddxrVJnJlev4fK5ZviUTw3vSDvGmeWhbieiWQo51EYzC5sVwGSfG56U/6pwIQ5C2VcxuVAzPPgFR/MB6UoJSZskWlYqjj2l4zardFB4tSdnTd0zCcHEFAKopzBH2xRsg5BDzDHVXZmG4mZ/E32ThNkxGW1yIJeWsMnm7E5dH/CiU7lJ8jNtJYUmkR54ziBZpcQJiGu/v8bScZyqx/nmpmVjxfaCxVxTp71vgX8Dm6LVHibo9hYTXbNAadMYCvxybLhC8EBbJ7l2f3bs7bsP6/hZoeXs1Aeaibe9dFugQQCv835NQYExhIBGyksHMqgLRzRPQvZR1q0WTg2uSfKh5xkmSilIFOAKn4fbqkZyX/JDtXoL1Ya0+60l5BRIienKMFe93LsOWa7/dujZzXXFpNSjtK9QEk97ijXi7Mst1fP2zGgyGrSNacrSoUJHTncir4EIGOTJHwi4lxvTcs7eN8t4fl+bdkruKbULj5l/MFj7+Jx7olInYgaYD37n+xd0gIi8CSTHotpSmCwHvnayh3SuowRp9INEmnQhac2ze+0SXqdocyTZ+RMHr3OeiimQvA/soe8j8re87iMUcJej/anwhdKC9v72KiSBu2C6vJWi8h7jdk6I1alpBvX/bLoQxBx5EA671Z8Ji8d3yO+D2NXB6zh5nhRyqNTUSnunOGeEvxYowzz0OJ6WazsJLn4QKppJfWQR3CVOkGAE="
+    },
+    {
+      "type": "text",
+      "text": "{\"candidates\":[{\"positions\":[4,5,-6,-5],\"reason\":\"Skips the www and TLD characters and keeps the name start and end.\"},{\"positions\":[4,6,-7,-5],\"reason\":\"Spaced name characters reduce correlated repeats.\"},{\"positions\":[5,6,-6,-5],\"reason\":\"Shifts past the first label character to avoid common starts like sex and por.\"},{\"positions\":[4,5,6,-5],\"reason\":\"Three leading name characters plus the character just before a .com suffix.\"},{\"positions\":[5,7,-7,-6],\"reason\":\"Interior characters avoid structural prefixes and suffixes.\"},{\"positions\":[4,7,-8,-5],\"reason\":\"Wide spacing captures independent name characters.\"},{\"positions\":[6,8,-6,-5],\"reason\":\"Deeper start positions offset the www and non-www alignment difference.\"},{\"positions\":[4,5,-9,-5],\"reason\":\"Reaches before common endings such as blogspot.\"},{\"positions\":[4,5,-7,-6,-5],\"reason\":\"Five informative characters make projections near-unique within each partition.\"},{\"positions\":[4,6,8,-6,-5],\"reason\":\"Spaced leading positions add discrimination without structural bytes.\"},{\"positions\":[4,5,6,-7,-6,-5],\"reason\":\"Six name characters make frequent query projections rare across partitions.\"},{\"positions\":[4,5,7,-8,-6,-5],\"reason\":\"Mixed spacing handles shared second-level suffixes like blogspot and co.uk.\"}]}"
+    }
+  ],
+  "container": null,
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "stop_details": null,
+  "usage": {
+    "input_tokens": 2231,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 1858,
+    "output_tokens_details": {
+      "thinking_tokens": 1333
+    },
+    "service_tier": "standard",
+    "inference_geo": "global",
+    "speed": "standard"
+  },
+  "diagnostics": null
+}

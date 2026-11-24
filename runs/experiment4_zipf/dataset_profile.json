@@ -1,0 +1,119 @@
+{
+  "total_keys": 2926705,
+  "category_distribution": {
+    "ipv4": {
+      "count": 112415,
+      "pct": 3.841
+    },
+    "non_www_single_dot": {
+      "count": 1269199,
+      "pct": 43.3661
+    },
+    "non_www_multiple_dots": {
+      "count": 323306,
+      "pct": 11.0468
+    },
+    "www_simple": {
+      "count": 947431,
+      "pct": 32.3719
+    },
+    "www_complex": {
+      "count": 274276,
+      "pct": 9.3715
+    },
+    "other": {
+      "count": 78,
+      "pct": 0.0027
+    }
+  },
+  "length_summary": {
+    "min": 4,
+    "max": 124,
+    "mean": 18.8888,
+    "median": 18.0
+  },
+  "top5_prefixes": [
+    {
+      "prefix": "www",
+      "count": 1222812,
+      "pct": 41.7812
+    },
+    {
+      "prefix": "sex",
+      "count": 46908,
+      "pct": 1.6028
+    },
+    {
+      "prefix": "por",
+      "count": 26997,
+      "pct": 0.9224
+    },
+    {
+      "prefix": "fre",
+      "count": 23661,
+      "pct": 0.8085
+    },
+    {
+      "prefix": "66.",
+      "count": 22127,
+      "pct": 0.756
+    }
+  ],
+  "top5_suffixes": [
+    {
+      "suffix": "com",
+      "count": 1553521,
+      "pct": 53.0809
+    },
+    {
+      "suffix": ".de",
+      "count": 186889,
+      "pct": 6.3856
+    },
+    {
+      "suffix": "net",
+      "count": 163703,
+      "pct": 5.5934
+    },
+    {
+      "suffix": ".uk",
+      "count": 111812,
+      "pct": 3.8204
+    },
+    {
+      "suffix": "org",
+      "count": 97316,
+      "pct": 3.3251
+    }
+  ],
+  "length_distribution": {
+    "4-7": {
+      "count": 15120,
+      "pct": 0.5166
+    },
+    "8-11": {
+      "count": 194152,
+      "pct": 6.6338
+    },
+    "12-15": {
+      "count": 723280,
+      "pct": 24.7131
+    },
+    "16-19": {
+      "count": 821039,
+      "pct": 28.0534
+    },
+    "20-23": {
+      "count": 595889,
+      "pct": 20.3604
+    },
+    "24-31": {
+      "count": 473901,
+      "pct": 16.1923
+    },
+    "32+": {
+      "count": 103324,
+      "pct": 3.5304
+    }
+  }
+}

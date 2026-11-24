@@ -1,0 +1,41 @@
+{
+  "command": [
+    "/Users/Zhuanz/Desktop/thesis/charmap_explore/gradlew",
+    "--console=plain",
+    "experiment4Evaluator",
+    "-PdatasetFile=/Users/Zhuanz/Desktop/thesis/charmap_explore/data/shalla/dataset.txt",
+    "-PqueryFile=/Users/Zhuanz/Desktop/thesis/charmap_explore/data/shalla/queries_zipf.txt",
+    "-Pworkload=zipf",
+    "-PoutputDir=/Users/Zhuanz/Desktop/thesis/charmap_explore/runs/experiment4_zipf/evaluation/profiled/call_1/benchmark",
+    "-PpartitionSize=8000",
+    "-Pbudget=512",
+    "-Pcandidates=/Users/Zhuanz/Desktop/thesis/charmap_explore/runs/experiment4_zipf/evaluation/profiled/call_1/designs.tsv",
+    "-Pseed=55",
+    "-Pheap=4g"
+  ],
+  "prepared_config_sha256": "71d8940f13c4dfffb554637eb7d3837da75a50b98be0c983eee43af2370c954e",
+  "frozen_sha256": "051fc491f9b975f36ff1b68676c9babc9ad9eea3c8217fd6491a7cd0cf1fcc33",
+  "designs_sha256": "02d30608cebf1afee75063017225b134335524bb5dcc1d4ca9909514031c99cc",
+  "hash_version": "fnv1a-mix-v1",
+  "source_sha256": {
+    "src/main/java/charmap/data/DatasetLoader.java": "5cbee9864f8c69c724d3e50ff1d664896514c7e29c9a61dbe160606011ea08cb",
+    "src/main/java/charmap/data/LoadedData.java": "0355d61dece5be5c2b49b498a47e267755f3c6dcbce34f16db46f72eb9afff26",
+    "src/main/java/charmap/data/PartitionLayout.java": "8c080158d9d218a654b58daebd0727d4a11d8448fc3aee8031d51d28b6e6873b",
+    "src/main/java/charmap/encoding/CharacterEncoding.java": "9794766e9ce1db1c58c076f07fde33ad090d18bfec9236e7449ce79e85d3afb1",
+    "src/main/java/charmap/evaluation/Evaluator.java": "0909735cbfc099e3a2137464d5da6eb012f4989f6d1e011e311f95ca3eab4894",
+    "src/main/java/charmap/evaluation/JointDiagnostics.java": "e40417d5f620bc262c3de7ce6af572b2300817bc5091c2d66aebee1fbc268918",
+    "src/main/java/charmap/evaluation/ResultWriter.java": "9467ff7c5aecb400c3b20d514111fec5ebd0b469b254c846c7d97d5fe2d21c2b",
+    "src/main/java/charmap/experiments/JointProfile.java": "5f6c94c86a3411ba4e5f4b7a4ef43725693f2f90a60dc79fb1a38eb205c0a96a",
+    "src/main/java/charmap/experiments/PartitionSensitivity.java": "d1d422232ea2ed07b55b90a06216a89a91784a261bc6e019c705895f6db265d3",
+    "src/main/java/charmap/experiments/PositionEvaluator.java": "820b5f06c1a90ec4d04391a2c1adf135ebafa87fa6ca2412de22fdb958d41bdb",
+    "src/main/java/charmap/experiments/ShallaPilot.java": "7ce9e3582abe8ed57ed114beea20e4f2f1d343d201640cea6d04b4d20518b161",
+    "src/main/java/charmap/hashing/HashUtils.java": "82d853c3109230c8c7a9e7a594aa00448c1b291c24ee33510cd41365bd12d657",
+    "src/main/java/charmap/serialization/MetadataSerializer.java": "42cedd0da66380c321a3e2abb4707d4c50ec7245fea500fd4eb77aed36ac0d58",
+    "src/main/java/charmap/statistics/BitmapStatistic.java": "f089402a634c21ccccef62a2be85abbf2593073e474eff1a94235333adeab27d",
+    "src/main/java/charmap/statistics/BloomFilter.java": "fc1c3dc255fecf30d08e4c72e7aa6e52ab753b8b996e7b01c27934207479dbe4",
+    "src/main/java/charmap/statistics/CharacterMap.java": "e0c96ca6e19503d26f7a6b26929e7174fc1af0f26b6320ec04cf2279cff6d20d",
+    "src/main/java/charmap/statistics/JointCharacterMap.java": "4aeb98d38eb9beea2f5c4a246783df0ff8e73f4962a266ecba4f76a1089b6034",
+    "src/main/java/charmap/statistics/LengthMap.java": "d3e55386c166783831c87191ecf0b1106f19228fc0ecc69de56e6089524933c2"
+  },
+  "build_sha256": "ff5f21f1f49c5e3a28e07bbd0c44ca2345156cb336a6dd89c34f88cb188e9a3b"
+}

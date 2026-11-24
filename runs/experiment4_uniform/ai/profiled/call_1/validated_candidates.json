@@ -1,0 +1,115 @@
+{
+  "candidates": [
+    {
+      "positions": [
+        4,
+        5,
+        -6,
+        -5
+      ],
+      "reason": "Skips the www. prefix and the common .com tail to use high-entropy name characters."
+    },
+    {
+      "positions": [
+        4,
+        6,
+        -7,
+        -5
+      ],
+      "reason": "Spaced interior characters reduce correlation between adjacent letters."
+    },
+    {
+      "positions": [
+        5,
+        6,
+        -6,
+        -5
+      ],
+      "reason": "Shifts the start window past common first letters while keeping the name-end characters."
+    },
+    {
+      "positions": [
+        4,
+        5,
+        6,
+        -5
+      ],
+      "reason": "Three post-prefix characters plus the last name character before a typical TLD."
+    },
+    {
+      "positions": [
+        4,
+        7,
+        -6,
+        -5
+      ],
+      "reason": "Wider start spacing adds discrimination across varied name lengths."
+    },
+    {
+      "positions": [
+        0,
+        5,
+        -6,
+        -5
+      ],
+      "reason": "Position 0 is informative for non-www keys, and the other positions avoid the shared tail."
+    },
+    {
+      "positions": [
+        4,
+        5,
+        -8,
+        -5
+      ],
+      "reason": "Deeper end offset captures name characters before longer suffixes."
+    },
+    {
+      "positions": [
+        5,
+        7,
+        -7,
+        -6
+      ],
+      "reason": "Offset interior picks avoid both the prefix and the suffix structural constants."
+    },
+    {
+      "positions": [
+        4,
+        5,
+        6,
+        -7,
+        -6,
+        -5
+      ],
+      "reason": "Six high-entropy positions maximize distinct projections at about 366 keys per partition."
+    },
+    {
+      "positions": [
+        4,
+        5,
+        -6,
+        -5,
+        -1
+      ],
+      "reason": "Adds the final TLD character to separate otherwise similar names."
+    },
+    {
+      "positions": [
+        0,
+        4,
+        5,
+        -6,
+        -5
+      ],
+      "reason": "Combines the first character of non-www keys with interior name characters."
+    },
+    {
+      "positions": [
+        4,
+        6,
+        -5
+      ],
+      "reason": "Compact three-position projection that still avoids structural constants."
+    }
+  ]
+}

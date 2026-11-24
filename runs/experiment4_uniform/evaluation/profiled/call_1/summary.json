@@ -1,0 +1,17 @@
+{
+  "workload": "uniform",
+  "call": 1,
+  "oracle_pruning_pct": 99.795257923,
+  "bloom_pruning_pct": 14.150550574,
+  "experiment3_best_pruning_pct": 18.326640874,
+  "experiment3_best_proposal": "A1_04",
+  "experiment4_candidate_count": 12,
+  "experiment4_best": "A06",
+  "experiment4_best_pruning_pct": 16.394329344,
+  "experiment4_mean_pruning_pct": 14.819064426166667,
+  "experiment4_median_pruning_pct": 14.6670896315,
+  "experiment4_min_pruning_pct": 14.087656311,
+  "experiment4_above_bloom": 11,
+  "experiment4_above_experiment3_best": 0,
+  "best_delta_experiment3_pp": -1.9323115299999998
+}

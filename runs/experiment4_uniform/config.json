@@ -1,0 +1,52 @@
+{
+  "experiment": 4,
+  "stage": "prepare_only",
+  "workload": "uniform",
+  "model": "claude-opus-5-5",
+  "effort": "high",
+  "max_tokens": 16000,
+  "candidates_per_call": 12,
+  "partition_size": 8000,
+  "budget_bytes": 512,
+  "partition_seed": 55,
+  "hash_version": "fnv1a-mix-v1",
+  "official_input_hashes_match": true,
+  "input_paths": {
+    "dataset": "/Users/Zhuanz/Desktop/thesis/charmap_explore/data/shalla/dataset.txt",
+    "query": "/Users/Zhuanz/Desktop/thesis/charmap_explore/data/shalla/queries_uniform.txt",
+    "examples": "/Users/Zhuanz/Desktop/thesis/charmap_explore/runs/experiment3_unified_hashing/examples.json"
+  },
+  "input_sha256": {
+    "dataset": "081bf7628046d046533f63ed2e049e4aff6bd21d3151b64a41c8cbfc584a4a2a",
+    "query": "095d4cbd2cc6091bd6a660ad0826c203b00b8d70c364a0eb8319b86d49529fb8",
+    "examples": "7deaf7636a37c19ad9d7a0f3f85b33cd14e863622141badaa6064273772cf794"
+  },
+  "category_version": "raw-www-dot-count-v1",
+  "evaluation_scope": "full_selected_workload_in_sample",
+  "query_occurrences": 10000000,
+  "length_buckets": [
+    "4-7",
+    "8-11",
+    "12-15",
+    "16-19",
+    "20-23",
+    "24-31",
+    "32+"
+  ],
+  "output_sha256": {
+    "dataset_profile.json": "88e2cda39d3334c8ce66e56236a645805452dad1e35fd5373fc7d2b415ff13fa",
+    "workload_profile.json": "0d450d678572a9887c920a50339c6f14edafdfbeb837f20e9ab8a4c72f5bcf33",
+    "prompt_profile.json": "b572c8169a5c089899f3f293eada599332781f73e5dac86071750d81d5ed7665",
+    "examples.json": "7deaf7636a37c19ad9d7a0f3f85b33cd14e863622141badaa6064273772cf794",
+    "prompt.md": "5ca682087b5a797ce99546e62fc1ac5873644b75a6e5e5e0a4bfbc5f5b408491",
+    "prompt_control.md": "8178a9bb28b0e737b6e428886f68baf10340bde95fe2994751017957150bc8bd"
+  },
+  "prompt_bytes": {
+    "prompt.md": 5083,
+    "prompt_control.md": 2454
+  },
+  "timing_seconds": {
+    "dataset_and_input_setup": 5.681,
+    "total_prepare": 15.885
+  }
+}

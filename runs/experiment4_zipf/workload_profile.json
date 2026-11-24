@@ -1,0 +1,150 @@
+{
+  "query_occurrences": 10000000,
+  "global_positive_count": 9442030,
+  "global_positive_pct": 94.4203,
+  "category_distribution": {
+    "ipv4": {
+      "count": 96688,
+      "pct": 0.9669
+    },
+    "non_www_single_dot": {
+      "count": 1474266,
+      "pct": 14.7427
+    },
+    "non_www_multiple_dots": {
+      "count": 1981605,
+      "pct": 19.8161
+    },
+    "www_simple": {
+      "count": 5001162,
+      "pct": 50.0116
+    },
+    "www_complex": {
+      "count": 1446265,
+      "pct": 14.4627
+    },
+    "other": {
+      "count": 14,
+      "pct": 0.0001
+    }
+  },
+  "positive_rate_by_category": {
+    "ipv4": {
+      "positive_count": 96688,
+      "pct": 100.0
+    },
+    "non_www_single_dot": {
+      "positive_count": 1317914,
+      "pct": 89.3946
+    },
+    "non_www_multiple_dots": {
+      "positive_count": 1594792,
+      "pct": 80.4798
+    },
+    "www_simple": {
+      "positive_count": 4987066,
+      "pct": 99.7181
+    },
+    "www_complex": {
+      "positive_count": 1445556,
+      "pct": 99.951
+    },
+    "other": {
+      "positive_count": 14,
+      "pct": 100.0
+    }
+  },
+  "top10_frequent_keys": [
+    {
+      "key": "www.mandalabookpoint.com",
+      "count": 3828030,
+      "pct": 38.2803,
+      "positive": true
+    },
+    {
+      "key": "horsehire.co.uk",
+      "count": 1353038,
+      "pct": 13.5304,
+      "positive": true
+    },
+    {
+      "key": "www.sinsulita.blogspot.it",
+      "count": 737454,
+      "pct": 7.3745,
+      "positive": true
+    },
+    {
+      "key": "jackmoff.com",
+      "count": 479197,
+      "pct": 4.792,
+      "positive": true
+    },
+    {
+      "key": "www.tonio49.over-blog.com",
+      "count": 343023,
+      "pct": 3.4302,
+      "positive": true
+    },
+    {
+      "key": "www.beachpornmovie.info",
+      "count": 260123,
+      "pct": 2.6012,
+      "positive": true
+    },
+    {
+      "key": "www.peeorgy.com",
+      "count": 207806,
+      "pct": 2.0781,
+      "positive": true
+    },
+    {
+      "key": "porn.lv",
+      "count": 169084,
+      "pct": 1.6908,
+      "positive": true
+    },
+    {
+      "key": "www.forum.aljayyash.net",
+      "count": 140963,
+      "pct": 1.4096,
+      "positive": true
+    },
+    {
+      "key": "www.martagalatas.com",
+      "count": 120894,
+      "pct": 1.2089,
+      "positive": true
+    }
+  ],
+  "top10_combined_share_pct": 76.3961,
+  "length_distribution": {
+    "4-7": {
+      "count": 170788,
+      "pct": 1.7079
+    },
+    "8-11": {
+      "count": 219286,
+      "pct": 2.1929
+    },
+    "12-15": {
+      "count": 2459972,
+      "pct": 24.5997
+    },
+    "16-19": {
+      "count": 370278,
+      "pct": 3.7028
+    },
+    "20-23": {
+      "count": 928029,
+      "pct": 9.2803
+    },
+    "24-31": {
+      "count": 5541034,
+      "pct": 55.4103
+    },
+    "32+": {
+      "count": 310613,
+      "pct": 3.1061
+    }
+  }
+}
