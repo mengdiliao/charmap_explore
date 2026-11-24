@@ -1,8 +1,8 @@
-# Experiment 4 — Simple Statistical Profiling (preparation only)
+# Experiment 4 — Simple Statistical Profiling (preparation and AI generation)
 
 ## Goal
 
-Measure whether adding eight simple dataset/workload characteristics improves AI-guided selection of one Joint Character Map's positions. Uniform and Zipf are separate target-workload experiments, not a single joint objective. This branch only prepares inputs and prompts; it does not invoke AI, freeze candidates, evaluate candidates, or modify Experiment 3's Java implementation/results.
+Measure whether adding eight simple dataset/workload characteristics improves AI-guided selection of one Joint Character Map's positions. Uniform and Zipf are separate target-workload experiments, not a single joint objective. This branch prepares inputs and prompts and supports explicit AI generation; it does not yet freeze or evaluate candidates or modify Experiment 3's Java implementation/results.
 
 ## Run
 
@@ -61,7 +61,22 @@ runs/experiment4_uniform/   # or experiment4_zipf/
 
 The two prompts use the same single-workload objective, original structural samples, model settings, reference positions, budget and candidate constraints; the only textual addition to the profiled arm is the statistical profile and its definitions. Historical scores from the old hashing version are deliberately omitted in both. A matched control matters because Experiment 3 optimized both workloads jointly; a comparison only against its historic AI proposals would confound profiling with the workload-specific objective. The current FNV-1a/mix hashing description is used, not the historical base-257 mapping description.
 
-No API calls are performed. The existing Experiment 3 generate/freeze/evaluate commands assume two workloads and a different config format: do not pass Experiment 4 folders to those commands. Later integration should evaluate both arms and random controls on the same original full query file for the selected workload, with P=8000, 512B, seed 55, zero false negatives, and matched candidate length distributions. Keep full-data Experiment 3 results as historical reference only.
+Preparation makes no API calls. The existing Experiment 3 generate/freeze/evaluate commands assume two workloads and a different config format: do not pass Experiment 4 folders to those commands. Later integration should evaluate both arms and random controls on the same original full query file for the selected workload, with P=8000, 512B, seed 55, zero false negatives, and matched candidate length distributions. Keep full-data Experiment 3 results as historical reference only.
+
+## AI generation
+
+Use your existing prepared run directories without rerunning prepare. Set ANTHROPIC_API_KEY in your local shell (never commit it). Each command makes one paid Anthropic Messages API request using the stored prompt and default model/effort from config.json:
+
+```bash
+python3 scripts/experiment4.py generate --out runs/experiment4_uniform --arm profiled
+python3 scripts/experiment4.py generate --out runs/experiment4_uniform --arm control
+python3 scripts/experiment4.py generate --out runs/experiment4_zipf --arm profiled
+python3 scripts/experiment4.py generate --out runs/experiment4_zipf --arm control
+```
+
+The profiled arm uses prompt.md and control uses prompt_control.md. Use one fresh conversation per request; do not give evaluator feedback. The generation command verifies the prepared artifact hashes and reuses Experiment 3 candidate validation. Both arms use the same model, effort and candidate constraints. If a model override is needed, use the same --model value for every arm and workload; the actual model returned by the API is also recorded. Optional --call 2 (and subsequent positive numbers) makes an independent repeat. Unpinned runs require explicit --allow-unpinned.
+
+Each request reserves ai/<arm>/call_<n>/ and records request.json before contacting the API. Successful calls also save api_raw.json, response.json, validated_candidates.json and generation.json (actual model, token usage, wall time and hashes). A repeated call number is rejected to prevent accidental paid duplicate requests. Incomplete or invalid responses are preserved, not silently retried; inspect the raw response and use a new call number for any intentional retry, retaining the original attempt. No credentials are written to disk by the script. Candidate evaluation remains a separate future step.
 
 ## Test
 
