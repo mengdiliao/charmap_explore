@@ -2,7 +2,7 @@
 
 ## Experiment 4 — offline profiling
 
-[experiment4.py](experiment4.py) generates descriptive profiles, a matched control prompt and a profiled prompt for one selected full workload (uniform or zipf), with raw prefix/dot-count categories and no external classification file. [test_experiment4.py](test_experiment4.py) provides offline fixture tests. Run instructions: [Experiment 4](../docs/experiment4-simple-profiling.md). The prepare command is offline; generate calls the Anthropic API for the chosen arm. Neither runs Gradle; keep Experiment 3 commands separate.
+[experiment4.py](experiment4.py) generates descriptive profiles, a matched control prompt and a profiled prompt for one selected full workload (uniform or zipf), with raw prefix/dot-count categories and no external classification file. [test_experiment4.py](test_experiment4.py) provides offline fixture tests. Run instructions: [Experiment 4](../docs/experiment4-simple-profiling.md). The prepare command is offline; generate calls the Anthropic API for the chosen arm. The evaluate command invokes the selected-workload Java evaluator, compares Oracle, optimized Bloom, historical best AI and all 12 profiled proposals, and writes CSV/JSON/Markdown results. Control and random generation are not required.
 
 ## Experiment 3
 
