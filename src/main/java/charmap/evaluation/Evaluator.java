@@ -109,6 +109,7 @@ public final class Evaluator {
             if(mode.equals("position"))header+=",positions,mean_token_ndv,mean_saturation_pct,collision_excess_pct,exact_joint_pruning_pct,bloom_k";
             csv.println(header);System.out.println(header);
             for(int w=0;w<2;w++){
+                if(d.queries[w]==0)continue; // Single-workload evaluation: no empty rows.
                 emit(csv,w,"Oracle",d.positive[w],0,0,0,0,orows[w],"exact",null);
                 if(mm)emit(csv,w,"MinMax32",mr[w],mf[w],mn[w],mmmeta,32,mrows[w],"prefix16 bounds",null);
                 for(Method m:methods)emit(csv,w,m.name,m.ret[w],m.fn[w],m.neg[w],m.meta,m.bytes,m.rows[w],m.desc(),m);
