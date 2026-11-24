@@ -2,12 +2,10 @@
 """Experiment 5, stage 1 only: prepare, generate source, review, run and validate."""
 import argparse
 import ast
-import hashlib
 import json
 import os
 from pathlib import Path
 import subprocess
-import sys
 from string import Template
 import time
 import uuid
@@ -16,58 +14,8 @@ from urllib.request import Request, urlopen
 from experiment3 import EXPECTED, HASH_VERSION, MODEL, ROOT, digest, save
 
 P, BUDGET, SEED = 8000, 512, 55
-MASK = (1 << 64) - 1
+INPUT_LAYOUT = "original_dataset_v1"
 PROMPT = ROOT / "scripts/prompts/experiment5_call1.txt"
-
-
-class MT64:
-    """Exact unsigned port of benchmark PartitionLayout.MT64."""
-    def __init__(self, seed):
-        self.s = [seed & MASK]
-        for i in range(1, 312):
-            x = self.s[-1]
-            self.s.append((6364136223846793005 * (x ^ (x >> 62)) + i) & MASK)
-        self.index = 312
-
-    def next(self):
-        s = self.s
-        if self.index == 312:
-            for i in range(312):
-                x = (s[i] & 0xffffffff80000000) | (s[(i+1)%312] & 0x7fffffff)
-                s[i] = s[(i+156)%312] ^ (x >> 1) ^ (0xb5026f5aa96619e9 if x & 1 else 0)
-            self.index = 0
-        x = s[self.index]
-        self.index += 1
-        x ^= (x >> 29) & 0x5555555555555555
-        x ^= (x << 17) & 0x71d67fffeda60000
-        x ^= (x << 37) & 0xfff7eee000000000
-        return x ^ (x >> 43)
-
-    def below(self, bound):
-        threshold = (1 << 64) % bound
-        while True:
-            product = self.next() * bound
-            if (product & MASK) >= threshold:
-                return product >> 64
-
-
-def shuffle(keys, seed=SEED):
-    """Match pinned libstdc++ paired-index shuffle, not Python random.shuffle."""
-    rng, n, i = MT64(seed), len(keys), 1
-    if n < 2:
-        return
-    if n % 2 == 0:
-        j = rng.below(2)
-        keys[1], keys[j] = keys[j], keys[1]
-        i += 1
-    while i < n:
-        b = i + 1
-        x = rng.below(b * (b + 1))
-        j, k = divmod(x, b + 1)
-        keys[i], keys[j] = keys[j], keys[i]
-        i += 1
-        keys[i], keys[k] = keys[k], keys[i]
-        i += 1
 
 
 def read_keys(path):
@@ -87,19 +35,20 @@ def prepare(args):
         raise ValueError("Input hashes differ from pinned Shalla; use --allow-unpinned for fixtures")
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
-    keys = list(read_keys(data))
-    if not keys or len(set(keys)) != len(keys):
-        raise ValueError("Empty dataset or duplicate stored keys")
+    seen = set()
+    for key in read_keys(data):
+        if key in seen:
+            raise ValueError("Duplicate stored keys")
+        seen.add(key)
+    n_keys = len(seen)
+    del seen
+    if not n_keys:
+        raise ValueError("Empty dataset")
     n_queries = sum(1 for _ in read_keys(query))
     if not n_queries:
         raise ValueError("Empty workload")
-    shuffle(keys)
-    layout = out / "partitioned_dataset.txt"
-    with layout.open("w", encoding="ascii", newline="\n") as f:
-        for key in keys:
-            f.write(key + "\n")
     prompt = Template(PROMPT.read_text(encoding="utf-8")).substitute(
-        dataset_count=f"{len(keys):,}", query_count=f"{n_queries:,}",
+        dataset_count=f"{n_keys:,}", query_count=f"{n_queries:,}",
         workload_label="Uniform" if args.workload == "uniform" else "Zipfian (official exponent 1.5)",
         partition_size=P, partition_seed=SEED, budget_bytes=BUDGET,
         bitmap_bits=BUDGET*8, max_profile_bytes=args.max_profile_bytes)
@@ -108,14 +57,15 @@ def prepare(args):
     if digest(data) != hashes["dataset"] or digest(query) != hashes["workload"]:
         raise ValueError("Input changed during preparation")
     save(out / "config.json", {
-        "experiment": 5, "stage": "call1_only", "workload": args.workload,
+        "experiment": 5, "stage": "call1_only", "input_layout": INPUT_LAYOUT,
+        "workload": args.workload,
         "model": MODEL, "effort": "high", "max_tokens": 16000,
         "partition_size": P, "budget_bytes": BUDGET, "partition_seed": SEED,
-        "hash_version": HASH_VERSION, "dataset_count": len(keys), "query_count": n_queries,
+        "hash_version": HASH_VERSION, "dataset_count": n_keys, "query_count": n_queries,
         "evaluation_scope": "full_selected_workload_in_sample",
         "official_input_hashes_match": pinned, "max_profile_bytes": args.max_profile_bytes,
         "input_paths": {"dataset": str(data), "workload": str(query)},
-        "input_sha256": hashes, "partitioned_sha256": digest(layout),
+        "input_sha256": hashes,
         "prompt_sha256": digest(out / "prompt_call1.txt"),
         "prepare_seconds": round(time.perf_counter()-start, 3),
     })
@@ -129,16 +79,26 @@ def config(out, allow_unpinned=False):
         raise ValueError("Not an Experiment 5 stage-1 run")
     if not cfg["official_input_hashes_match"] and not allow_unpinned:
         raise ValueError("Unpinned inputs require --allow-unpinned")
-    for filename, field in (("prompt_call1.txt", "prompt_sha256"),
-                            ("partitioned_dataset.txt", "partitioned_sha256")):
-        if digest(out / filename) != cfg[field]:
-            raise ValueError(f"Prepared artifact changed: {filename}")
+    if cfg.get("input_layout") != INPUT_LAYOUT:
+        raise ValueError("Old shuffled-input run; prepare again in a fresh --out directory")
+    if digest(out / "prompt_call1.txt") != cfg["prompt_sha256"]:
+        raise ValueError("Prepared artifact changed: prompt_call1.txt")
     return cfg
+
+
+def verified_inputs(cfg, dataset_file=None, query_file=None):
+    data = (dataset_file or Path(cfg["input_paths"]["dataset"])).resolve()
+    query = (query_file or Path(cfg["input_paths"]["workload"])).resolve()
+    for name, path in (("dataset", data), ("workload", query)):
+        if digest(path) != cfg["input_sha256"][name]:
+            raise ValueError(f"Input changed: {name}")
+    return data, query
 
 
 def generate(args):
     out = args.out.resolve()
     cfg = config(out, args.allow_unpinned)
+    verified_inputs(cfg)
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         raise ValueError("Set ANTHROPIC_API_KEY in your shell")
@@ -230,14 +190,12 @@ def run(args):
         raise ValueError("Run config changed")
     if digest(source) != generation["source_sha256"] or args.approve_sha != digest(source):
         raise ValueError("Review the exact generated source and supply its SHA-256")
-    query = (args.query_file or Path(cfg["input_paths"]["workload"])).resolve()
-    if digest(query) != cfg["input_sha256"]["workload"]:
-        raise ValueError("Workload changed")
+    data, query = verified_inputs(cfg, args.dataset_file, args.query_file)
     result = dest / f"execution_{args.execution}"
     result.mkdir(exist_ok=False)
     output = result / "characteristics.json"
     name = "charmap-exp5-" + uuid.uuid4().hex
-    # Do not pass API credentials, repository, raw original dataset, or other runs.
+    # Do not pass API credentials, repository, benchmark, or other runs.
     # Docker must already have the image available; no implicit image pull.
     image = args.image
     cmd = ["docker", "run", "--rm", "--pull=never", "--name", name,
@@ -247,7 +205,7 @@ def run(args):
            "--tmpfs", "/tmp:rw,noexec,nosuid,size=64m",
            "-e", "PYTHONHASHSEED=0", "-e", "PYTHONDONTWRITEBYTECODE=1",
            "--mount", f"type=bind,src={source},dst=/extract_characteristics.py,readonly",
-           "--mount", f"type=bind,src={out / 'partitioned_dataset.txt'},dst=/dataset.txt,readonly",
+           "--mount", f"type=bind,src={data},dst=/dataset.txt,readonly",
            "--mount", f"type=bind,src={query},dst=/queries.txt,readonly",
            "--mount", f"type=bind,src={result},dst=/output",
            image, "python3", "/extract_characteristics.py",
@@ -265,8 +223,9 @@ def run(args):
         validate_profile(output, cfg["max_profile_bytes"])
         if sorted(p.name for p in result.iterdir()) != ["characteristics.json"]:
             raise ValueError("Unexpected files produced by extractor")
-        if digest(source) != generation["source_sha256"] or digest(query) != cfg["input_sha256"]["workload"] or digest(out / "partitioned_dataset.txt") != cfg["partitioned_sha256"]:
-            raise ValueError("Input/source changed during execution")
+        verified_inputs(cfg, data, query)
+        if digest(source) != generation["source_sha256"]:
+            raise ValueError("Source changed during execution")
         status = "schema_validated"
     finally:
         if status != "schema_validated":
@@ -294,7 +253,7 @@ def positive_int(value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    prep = sub.add_parser("prepare", help="Offline prompt and exact partition order")
+    prep = sub.add_parser("prepare", help="Offline prompt and original input validation")
     prep.add_argument("--workload", choices=["uniform", "zipf"], required=True)
     prep.add_argument("--data", type=Path, default=ROOT / "data/shalla")
     prep.add_argument("--dataset-file", type=Path)
@@ -307,6 +266,7 @@ def main():
     exe.add_argument("--call", type=positive_int, default=1)
     exe.add_argument("--execution", type=positive_int, default=1)
     exe.add_argument("--approve-sha", required=True, help="SHA-256 of the manually reviewed source")
+    exe.add_argument("--dataset-file", type=Path)
     exe.add_argument("--query-file", type=Path)
     exe.add_argument("--timeout", type=positive_int, default=600)
     exe.add_argument("--image", default="python:3.12-slim", help="Pre-pulled Python image")
