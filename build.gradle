@@ -62,3 +62,9 @@ experiment('positionEvaluator', 'PositionEvaluator', {
     [data(), prop('outputDir', 'runs/experiment3_unified_hashing/benchmark'), p(), budget(),
      prop('candidates', 'runs/experiment3_unified_hashing/designs.tsv'), prop('seed', '55')]
 }, 'Evaluate frozen AI/random position combinations, Bloom, and Oracle (Experiment 3).')
+
+experiment('experiment4Evaluator', 'PositionEvaluator', {
+    [prop('datasetFile', 'data/shalla/dataset.txt'), prop('queryFile', 'data/shalla/queries_uniform.txt'),
+     prop('workload', 'uniform'), prop('outputDir', 'runs/experiment4_uniform/evaluation'), p(), budget(),
+     prop('candidates', 'runs/experiment4_uniform/designs.tsv'), prop('seed', '55')]
+}, 'Evaluate a selected full workload and frozen position combinations (Experiment 4).')
