@@ -4,7 +4,7 @@ Reads the already prepared Shalla files. No download or generation is performed 
 
 | File | Responsibility |
 | --- | --- |
-| [DatasetLoader.java](DatasetLoader.java) | Reads dataset.txt and both query files using ASCII, rejects duplicate stored keys and empty inputs, counts query multiplicities, and invokes the deterministic shuffle. |
+| [DatasetLoader.java](DatasetLoader.java) | Reads dataset.txt and either both query files (Experiment 3) or one selected query file (Experiment 4) using ASCII, rejects duplicate stored keys and empty inputs, counts query multiplicities, and invokes the deterministic shuffle. |
 | [LoadedData.java](LoadedData.java) | Holds stored keys, the union of stored/query keys, per-workload occurrence counts, global query counts, and partition membership. No file I/O. |
 | [PartitionLayout.java](PartitionLayout.java) | Implements the pinned MT19937-64/libstdc++-compatible shuffle and assigns partition IDs from shuffled key indices (index / P). Updates positive-query counts from membership. |
 
