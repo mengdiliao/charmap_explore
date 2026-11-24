@@ -1,3 +1,9 @@
+# Experiment 4 — Simple Statistical Profiling (preparation)
+
+This branch adds workload-specific offline profiling and prompts. See [Experiment 4 instructions](docs/experiment4-simple-profiling.md) for the eight characteristics, file-selection flags, matched control, holdout and tests. No AI API call or evaluation has been performed as part of preparation.
+
+---
+
 # Experiment 3 — AI-guided Joint Character Maps
 
 Stage results for equality-based partition pruning on the Shalla dataset.
