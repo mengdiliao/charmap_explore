@@ -1,3 +1,9 @@
+# Experiment 5 — AI-defined Characteristic Extraction (stage 1)
+
+This branch extends Experiment 4 with an independent first AI call that generates a standalone profiling program. Review the generated source before isolated local execution; inspect the four dataset and four workload characteristics before any second AI call. See [Experiment 5 instructions](docs/experiment5-ai-characteristic-extraction.md). Existing experiments and benchmark remain unchanged.
+
+---
+
 # Experiment 4 — Simple Statistical Profiling 
 
 This branch adds workload-specific offline profiling and prompts. See [Experiment 4 instructions](docs/experiment4-simple-profiling.md) for the eight characteristics, file-selection flags, matched control, full-workload profiling, raw dot-count categories and tests. The prepare command is offline; generate makes one explicit AI API call for a selected prompt arm. The evaluate command runs the four-group comparison for one full workload using the existing profiled response, without any API call.
