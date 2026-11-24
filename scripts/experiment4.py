@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Experiment 4: offline descriptive profiling and workload-specific prompts."""
 import argparse
+import csv
 from collections import Counter
 import heapq
 import ipaddress
@@ -8,10 +9,12 @@ import json
 import os
 from pathlib import Path
 import re
+import subprocess
+import statistics
 import time
 from urllib.request import Request, urlopen
 
-from experiment3 import EXPECTED, HASH_VERSION, MODEL, ROOT, digest, read_response
+from experiment3 import EXPECTED, HASH_VERSION, MODEL, ROOT, digest, read_response, canonical, POSITIONS
 
 CATEGORIES = ("ipv4", "non_www_single_dot", "non_www_multiple_dots",
               "www_simple", "www_complex", "other")
@@ -341,6 +344,175 @@ def generate(args):
     print(dest)
 
 
+HISTORICAL_RUN = ROOT/"runs/experiment3_unified_hashing"
+
+
+def historical_best(cfg, directory):
+    """Select the best historical AI only, on the same workload and settings."""
+    history = json.loads((directory/"config.json").read_text(encoding="utf-8"))
+    runtime = json.loads((directory/"runtime.json").read_text(encoding="utf-8"))
+    workload = cfg["workload"]
+    expected = {"dataset.txt": cfg["input_sha256"]["dataset"],
+                f"queries_{workload}.txt": cfg["input_sha256"]["query"]}
+    if (runtime["hash_version"] != cfg["hash_version"] or
+            history["partition_size"] != cfg["partition_size"] or
+            history["budget"] != cfg["budget_bytes"] or
+            history["partition_seed"] != cfg["partition_seed"] or
+            any(history["input_sha256"].get(k) != v for k,v in expected.items())):
+        raise ValueError("Experiment 3 and Experiment 4 inputs/settings are not comparable")
+    with (directory/"proposal_results.csv").open(newline="",encoding="utf-8") as f:
+        rows = [r for r in csv.DictReader(f) if r["workload"] == workload and r["group"] == "AI"]
+    if not rows or any(int(r["false_negatives"]) != 0 or
+                       int(r["partition_size"]) != cfg["partition_size"] or
+                       int(r["budget_bytes"]) != cfg["budget_bytes"] or
+                       int(r["queries"]) != cfg["query_occurrences"] for r in rows):
+        raise ValueError("Invalid or missing comparable Experiment 3 AI rows")
+    # Deterministic tie break by proposal ID.
+    best = min(rows,key=lambda r: (-float(r["pruning_pct"]),r["proposal_id"]))
+    pos = [int(x) for x in best["positions"].split(";")]
+    if not 2 <= len(pos) <= 6 or len(set(pos)) != len(pos) or not set(pos) <= set(POSITIONS):
+        raise ValueError("Invalid historical positions")
+    return best, list(canonical(pos))
+
+
+def evaluation_inputs(args, cfg):
+    data = args.dataset_file or Path(cfg["input_paths"]["dataset"])
+    query = args.query_file or Path(cfg["input_paths"]["query"])
+    for name, path in (("dataset",data),("query",query)):
+        if digest(path) != cfg["input_sha256"][name]:
+            raise ValueError(f"Input differs from prepared run: {name}")
+    return data.resolve(), query.resolve()
+
+
+def frozen_candidates(out, cfg, call, historical):
+    """Verify the existing generated response and preserve every AI proposal."""
+    ai = out/"ai"/"profiled"/f"call_{call}"
+    meta = json.loads((ai/"generation.json").read_text(encoding="utf-8"))
+    expected = {
+        "workload":cfg["workload"],"arm":"profiled","call":call,
+        "prepared_config_sha256":digest(out/"config.json"),
+        "prompt_sha256":digest(out/"prompt.md"),
+        "response_sha256":digest(ai/"response.json"),
+        "validated_candidates_sha256":digest(ai/"validated_candidates.json"),
+    }
+    if any(meta.get(k) != v for k,v in expected.items()):
+        raise ValueError("AI response provenance mismatch")
+    candidates = read_response(ai/"response.json")
+    if json.loads((ai/"validated_candidates.json").read_text()) != {"candidates":candidates}:
+        raise ValueError("Validated candidates differ from raw response")
+    best, positions = historical_best(cfg,historical)
+    designs = [{"algorithm":"Experiment3BestAI","group":"Experiment3BestAI",
+                "proposal_id":best["proposal_id"],"positions":positions,
+                "reason":best["reason"],"historical_pruning_pct":float(best["pruning_pct"])}]
+    designs.extend({"algorithm":f"E4_A{i:02d}","group":"Experiment4ProfiledAI",
+                    "proposal_id":f"A{i:02d}",**candidate}
+                   for i,candidate in enumerate(candidates,1))
+    return {
+        "workload":cfg["workload"],"call":call,"generation":meta,
+        "historical_csv_sha256":digest(historical/"proposal_results.csv"),
+        "historical_config_sha256":digest(historical/"config.json"),
+        "historical_best_row":best,"designs":designs,
+    }
+
+
+def evaluation_report(dest, cfg, frozen):
+    """Expose four groups only, retaining all evaluator metrics."""
+    with (dest/"benchmark/results.csv").open(newline="",encoding="utf-8") as f:
+        raw = list(csv.DictReader(f))
+    by = {r["algorithm"]:r for r in raw}
+    designs = frozen["designs"]
+    order = ["Oracle","OptimizedBloom"]+[d["algorithm"] for d in designs]
+    if len(raw) != len(order) or set(by) != set(order):
+        raise ValueError("Unexpected/missing evaluator results")
+    for r in raw:
+        if (r["workload"] != cfg["workload"] or int(r["false_negatives"]) != 0 or
+                int(r["queries"]) != cfg["query_occurrences"] or
+                int(r["partition_size"]) != cfg["partition_size"] or
+                int(r["budget_bytes"]) != cfg["budget_bytes"]):
+            raise ValueError("Incorrect workload, settings or false negatives in evaluator output")
+    old = frozen["historical_best_row"]
+    replay = by["Experiment3BestAI"]
+    # Counts are exact and independent of metadata filename length.
+    for key in ("dataset_rows","partitions","queries","global_positive","retained","false_negatives"):
+        if int(old[key]) != int(replay[key]):
+            raise ValueError(f"Experiment 3 replay differs from historical result: {key}")
+    bloom = float(by["OptimizedBloom"]["pruning_pct"])
+    old_score = float(replay["pruning_pct"])
+    info = {d["algorithm"]:d for d in designs}
+    rows = []
+    for name in order:
+        r = by[name]
+        d = info.get(name,{})
+        if d and r["positions"] != ";".join(map(str,d["positions"])):
+            raise ValueError(f"Evaluator positions differ: {name}")
+        rows.append({"group":d.get("group",name),"proposal_id":d.get("proposal_id",""),
+                     "reason":d.get("reason",""),**r,
+                     "historical_pruning_pct":d.get("historical_pruning_pct",""),
+                     "delta_bloom_pp":float(r["pruning_pct"])-bloom,
+                     "delta_experiment3_best_pp":float(r["pruning_pct"])-old_score})
+    with (dest/"results.csv").open("w",newline="",encoding="utf-8") as f:
+        writer = csv.DictWriter(f,fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+    profiled = [r for r in rows if r["group"] == "Experiment4ProfiledAI"]
+    scores = [float(r["pruning_pct"]) for r in profiled]
+    best = max(profiled,key=lambda r: float(r["pruning_pct"]))
+    summary = {
+        "workload":cfg["workload"],"call":frozen["call"],
+        "oracle_pruning_pct":float(by["Oracle"]["pruning_pct"]),
+        "bloom_pruning_pct":bloom,"experiment3_best_pruning_pct":old_score,
+        "experiment3_best_proposal":old["proposal_id"],
+        "experiment4_candidate_count":len(scores),"experiment4_best":best["proposal_id"],
+        "experiment4_best_pruning_pct":max(scores),"experiment4_mean_pruning_pct":statistics.mean(scores),
+        "experiment4_median_pruning_pct":statistics.median(scores),"experiment4_min_pruning_pct":min(scores),
+        "experiment4_above_bloom":sum(x>bloom for x in scores),
+        "experiment4_above_experiment3_best":sum(x>old_score for x in scores),
+        "best_delta_experiment3_pp":max(scores)-old_score,
+    }
+    save(dest/"summary.json",summary)
+    lines = [f"# Experiment 4 — {cfg['workload']} (profiled call {frozen['call']})","",
+             "| Group | Proposal | Positions | Pruning % | Delta vs Bloom (pp) | Delta vs E3 best (pp) |",
+             "|---|---|---|---:|---:|---:|"]
+    for r in rows:
+        lines.append(f"| {r['group']} | {r['proposal_id']} | {r['positions']} | {float(r['pruning_pct']):.4f} | {r['delta_bloom_pp']:+.4f} | {r['delta_experiment3_best_pp']:+.4f} |")
+    lines += ["",f"Profiled best / mean / median: {max(scores):.4f}% / {statistics.mean(scores):.4f}% / {statistics.median(scores):.4f}%.",
+              f"Above E3 best: {summary['experiment4_above_experiment3_best']}/{len(scores)}; above Bloom: {summary['experiment4_above_bloom']}/{len(scores)}.",
+              "All results are in-sample. Experiment 3 best is selected post hoc; workload-specific prompting and profile information changed together. No causal attribution to the profile alone."]
+    (dest/"report.md").write_text("\n".join(lines)+"\n",encoding="utf-8")
+    print((dest/"report.md").read_text())
+
+
+def evaluate(args):
+    cfg = prepared_config(args.out)
+    data, query = evaluation_inputs(args,cfg)
+    frozen = frozen_candidates(args.out,cfg,args.call,args.historical_run)
+    dest = args.out/"evaluation"/"profiled"/f"call_{args.call}"
+    if args.eval_out is not None:
+        dest = args.eval_out
+    dest = dest.resolve()
+    dest.mkdir(parents=True,exist_ok=False)
+    save(dest/"frozen.json",frozen)
+    tsv = dest/"designs.tsv"
+    tsv.write_text("".join(d["algorithm"]+"\t"+"\t".join(map(str,d["positions"]))+"\n"
+                          for d in frozen["designs"]),encoding="utf-8")
+    gradle = ROOT/("gradlew.bat" if os.name=="nt" else "gradlew")
+    command = [str(gradle),"--console=plain","experiment4Evaluator",
+               "-PdatasetFile="+str(data),"-PqueryFile="+str(query),"-Pworkload="+cfg["workload"],
+               "-PoutputDir="+str(dest/"benchmark"),"-PpartitionSize="+str(cfg["partition_size"]),
+               "-Pbudget="+str(cfg["budget_bytes"]),"-Pcandidates="+str(tsv),
+               "-Pseed="+str(cfg["partition_seed"]),"-Pheap="+args.heap]
+    save(dest/"runtime.json",{
+        "command":command,"prepared_config_sha256":digest(args.out/"config.json"),
+        "frozen_sha256":digest(dest/"frozen.json"),"designs_sha256":digest(tsv),
+        "hash_version":cfg["hash_version"],
+        "source_sha256":{str(p.relative_to(ROOT)):digest(p)
+                         for p in sorted((ROOT/"src/main/java/charmap").rglob("*.java"))},
+        "build_sha256":digest(ROOT/"build.gradle"),
+    })
+    subprocess.run(command,cwd=ROOT,check=True)
+    evaluation_report(dest,cfg,frozen)
+
+
 def positive_int(value):
     result = int(value)
     if result < 1:
@@ -366,11 +538,16 @@ def main():
     gen.add_argument("--call",type=positive_int,default=1,help="Unique independent call number")
     gen.add_argument("--model",help="Optional model override; keep identical across all arms")
     gen.add_argument("--allow-unpinned",action="store_true",help="Explicit opt-in for custom data")
+    ev = commands.add_parser("evaluate", help="Evaluate one existing profiled AI response and historical best")
+    ev.add_argument("--out",required=True,type=Path,help="Existing prepared run")
+    ev.add_argument("--call",type=positive_int,default=1)
+    ev.add_argument("--historical-run",type=Path,default=HISTORICAL_RUN)
+    ev.add_argument("--dataset-file",type=Path,help="Override relocated input path; hash must match")
+    ev.add_argument("--query-file",type=Path,help="Override relocated input path; hash must match")
+    ev.add_argument("--eval-out",type=Path,help="Fresh evaluation output directory")
+    ev.add_argument("--heap",default="4g",help="Java maximum heap (e.g. 8g)")
     args = parser.parse_args()
-    if args.command == "prepare":
-        prepare(args)
-    else:
-        generate(args)
+    {"prepare":prepare,"generate":generate,"evaluate":evaluate}[args.command](args)
 
 
 if __name__ == "__main__":
