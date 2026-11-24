@@ -115,5 +115,51 @@ class StageOneTests(unittest.TestCase):
             self.assertEqual(meta["profile_sha256"], e.digest(dest/"execution_1/characteristics.json"))
 
 
+    def test_resume_truncated_source(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            data, query, out = root/"data.txt", root/"query.txt", root/"run"
+            data.write_text("a\nb\n", encoding="ascii")
+            query.write_text("a\nx\n", encoding="ascii")
+            e.prepare(argparse.Namespace(dataset_file=data, query_file=query, data=root,
+                                         workload="uniform", out=out, allow_unpinned=True,
+                                         max_profile_bytes=16384))
+            initial = "import json\n\ndef main():\n    x = "
+            first = {"stop_reason": "max_tokens", "model": "fixture",
+                     "content": [{"type": "text", "text": initial}],
+                     "usage": {"input_tokens": 100, "output_tokens": 16000}}
+            prefix, anchor = e.continuation_anchor(initial)
+            second = {"stop_reason": "end_turn", "model": "fixture",
+                      "content": [{"type": "text", "text": anchor + "    x = 1\n    return x\n"}],
+                      "usage": {"input_tokens": 200, "output_tokens": 100}}
+            dest = out/"ai/call_1"
+            gen = argparse.Namespace(out=out, allow_unpinned=True, model="fixture", call=1)
+            cont = argparse.Namespace(out=out, allow_unpinned=True, call=1, max_tokens=32000)
+            with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test"}), patch.object(e, "urlopen") as api:
+                api.return_value.__enter__.return_value.read.return_value = json.dumps(first)
+                with self.assertRaisesRegex(ValueError, "Token limit reached"):
+                    e.generate(gen)
+                self.assertEqual((dest/"response.txt").read_text(), initial)
+                self.assertFalse((dest/"extract_characteristics.py").exists())
+                # Mimic an older incomplete run with no recorded elapsed time.
+                (dest/"attempt.json").unlink()
+                api.return_value.__enter__.return_value.read.return_value = json.dumps(second)
+                e.resume(cont)
+                body = json.loads(api.call_args.args[0].data)
+                self.assertEqual(body["messages"][-1]["role"], "user")
+                self.assertEqual(body["messages"][1]["content"], initial)
+                self.assertEqual(body["max_tokens"], 32000)
+                with self.assertRaisesRegex(ValueError, "already"):
+                    e.resume(cont)
+                self.assertEqual(api.call_count, 2)
+            self.assertEqual((dest/"response.txt").read_text(), initial)
+            self.assertEqual((dest/"extract_characteristics.py").read_text(), prefix + "    x = 1\n    return x\n")
+            meta = json.loads((dest/"generation.json").read_text())
+            self.assertTrue(meta["resumed"])
+            self.assertEqual(meta["usage"]["output_tokens"], 16100)
+            self.assertEqual(meta["api_responses"], 2)
+            self.assertIsNone(meta["elapsed_seconds"])
+
+
 if __name__ == "__main__":
     unittest.main()
