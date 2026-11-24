@@ -1,6 +1,6 @@
-# Experiment 4 — Simple Statistical Profiling (preparation and AI generation)
+# Experiment 4 — Simple Statistical Profiling 
 
-This branch adds workload-specific offline profiling and prompts. See [Experiment 4 instructions](docs/experiment4-simple-profiling.md) for the eight characteristics, file-selection flags, matched control, full-workload profiling, raw dot-count categories and tests. The prepare command is offline; generate makes one explicit AI API call for a selected prompt arm. Candidate evaluation is not yet integrated.
+This branch adds workload-specific offline profiling and prompts. See [Experiment 4 instructions](docs/experiment4-simple-profiling.md) for the eight characteristics, file-selection flags, matched control, full-workload profiling, raw dot-count categories and tests. The prepare command is offline; generate makes one explicit AI API call for a selected prompt arm. The evaluate command runs the four-group comparison for one full workload using the existing profiled response, without any API call.
 
 ---
 
@@ -37,7 +37,7 @@ Joint CM can outperform Bloom at this budget, but the single AI response does no
 - [Experimental design and methodology](docs/experiment3-level1.md): candidate selection, shared hashing, metrics, correctness, limitations and reproducibility.
 - [Shalla data and workload preparation](docs/data-preparation.md): source, exact data counts and how to obtain the input files.
 - [Published results and artifact guide](runs/experiment3_unified_hashing/README.md): main findings, candidate positions and where to find the raw results.
-- [Full benchmark CSV](runs/experiment3_unified_hashing/benchmark/results.csv) and [candidate-level CSV](runs/experiment3_unified_hashing/proposal_results.csv).
+- [Full benchmark CSV](runs/experiment3_unified_hashing/results.csv) and [candidate-level CSV](runs/experiment3_unified_hashing/proposal_results.csv).
 - [Original AI prompt](runs/experiment3_unified_hashing/prompt.md), [response](runs/experiment3_unified_hashing/response_1.json) and [frozen designs](runs/experiment3_unified_hashing/frozen.json).
 
 ## Reproduce the published result
