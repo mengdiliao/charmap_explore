@@ -50,7 +50,7 @@ def prepare(args):
     prompt = Template(PROMPT.read_text(encoding="utf-8")).substitute(
         dataset_count=f"{n_keys:,}", query_count=f"{n_queries:,}",
         workload_label="Uniform" if args.workload == "uniform" else "Zipfian (official exponent 1.5)",
-        partition_size=P, partition_seed=SEED, budget_bytes=BUDGET,
+        partition_size=P, budget_bytes=BUDGET,
         bitmap_bits=BUDGET*8, max_profile_bytes=args.max_profile_bytes)
     (out / "prompt_call1.txt").write_text(prompt, encoding="utf-8")
     # Detect changes during preparation.
