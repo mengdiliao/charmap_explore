@@ -15,14 +15,6 @@ def profile():
 
 
 class StageOneTests(unittest.TestCase):
-    def test_shuffle_gcc_reference(self):
-        # Generated independently with GCC std::shuffle / mt19937_64(55).
-        for expected in ([0], [1,0], [3,0,4,2,1], [2,5,4,0,1,3],
-                         [12,13,18,17,1,15,14,0,7,4,2,6,19,5,8,16,3,11,9,10]):
-            keys = list(range(len(expected)))
-            e.shuffle(keys)
-            self.assertEqual(keys, expected)
-
     def test_profile_contract(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d)/"profile.json"
@@ -57,13 +49,29 @@ class StageOneTests(unittest.TestCase):
                                          max_profile_bytes=16384))
             cfg = e.config(out, True)
             self.assertEqual(cfg["query_count"], 3)
-            self.assertEqual(list(e.read_keys(out/"partitioned_dataset.txt")), list("daecb"))
-            self.assertIn("already shuffled", (out/"prompt_call1.txt").read_text())
+            self.assertEqual(cfg["dataset_count"], 5)
+            self.assertEqual(cfg["input_layout"], e.INPUT_LAYOUT)
+            self.assertEqual(set(p.name for p in out.iterdir()), {"config.json", "prompt_call1.txt"})
+            self.assertEqual(data.read_text(), "a\nb\nc\nd\ne\n")
+            self.assertIn("original file order", (out/"prompt_call1.txt").read_text())
+            self.assertIn("MT19937-64/libstdc++-compatible", (out/"prompt_call1.txt").read_text())
+            # Old prepared runs must not silently use the revised input semantics.
+            old_cfg = dict(cfg)
+            old_cfg.pop("input_layout")
+            e.save(out/"config.json", old_cfg)
+            with self.assertRaisesRegex(ValueError, "Old shuffled-input run"):
+                e.config(out, True)
+            e.save(out/"config.json", cfg)
             fake = {"stop_reason": "end_turn", "content": [{"type":"text","text":"print('fixture')\n"}],
                     "model": "fixture", "usage": {"input_tokens": 10, "output_tokens": 5}}
             args = argparse.Namespace(out=out, allow_unpinned=True, model=None, call=1)
             with patch.dict(os.environ, {"ANTHROPIC_API_KEY":"test"}), patch.object(e,"urlopen") as api:
                 api.return_value.__enter__.return_value.read.return_value = json.dumps(fake)
+                data.write_text("changed\n")
+                with self.assertRaisesRegex(ValueError, "Input changed: dataset"):
+                    e.generate(args)
+                api.assert_not_called()
+                data.write_text("a\nb\nc\nd\ne\n")
                 e.generate(args)
                 api.assert_called_once()
                 with self.assertRaises(FileExistsError):
@@ -74,16 +82,24 @@ class StageOneTests(unittest.TestCase):
             self.assertFalse((dest/"execution_1").exists())
             run_args = argparse.Namespace(out=out, allow_unpinned=True, call=1,
                                           execution=1, approve_sha="wrong",
-                                          query_file=None, timeout=600, image="python:3.12-slim")
+                                          dataset_file=None, query_file=None, timeout=600, image="python:3.12-slim")
             with patch.object(e.subprocess,"run") as proc:
                 with self.assertRaises(ValueError):
                     e.run(run_args)
                 proc.assert_not_called()
                 run_args.approve_sha = e.digest(source)
+                data.write_text("changed\n")
+                with self.assertRaisesRegex(ValueError, "Input changed: dataset"):
+                    e.run(run_args)
+                proc.assert_not_called()
+                data.write_text("a\nb\nc\nd\ne\n")
 
                 def fake_docker(cmd, **kwargs):
                     self.assertIn("--network=none", cmd)
                     self.assertIn("--read-only", cmd)
+                    self.assertIn(f"type=bind,src={data.resolve()},dst=/dataset.txt,readonly", cmd)
+                    self.assertIn(f"type=bind,src={query.resolve()},dst=/queries.txt,readonly", cmd)
+                    self.assertNotIn("partitioned_dataset.txt", " ".join(cmd))
                     self.assertNotIn("ANTHROPIC_API_KEY", " ".join(cmd))
                     (dest/"execution_1/characteristics.json").write_text(json.dumps(profile()))
 
