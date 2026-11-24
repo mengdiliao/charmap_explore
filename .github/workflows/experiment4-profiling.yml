@@ -12,3 +12,39 @@ jobs:
         with:
           python-version: '3.12'
       - run: python3 -m unittest discover -s scripts -p 'test_experiment4.py' -v
+  evaluator-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Check selected-workload parity with Experiment 3 mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/e4-smoke"
+          mkdir -p "$d"
+          printf 'alpha.com\nbeta.com\ngamma.net\ndelta.org\nwww.foo.com\nwww.bar.net\n' > "$d/dataset.txt"
+          printf 'alpha.com\nother.com\nbeta.com\n' > "$d/queries_uniform.txt"
+          printf 'gamma.net\ngamma.net\nnotfound.org\n' > "$d/queries_zipf.txt"
+          printf 'Experiment3BestAI\t0\t1\t-5\t-1\nE4_A01\t1\t2\t-3\n' > "$d/designs.tsv"
+          ./gradlew --console=plain positionEvaluator "-PdataDir=$d" "-PoutputDir=$d/both" "-Pcandidates=$d/designs.tsv" -PpartitionSize=2 -Pbudget=512 -Pseed=55
+          for w in uniform zipf; do
+            ./gradlew --console=plain experiment4Evaluator "-PdatasetFile=$d/dataset.txt" "-PqueryFile=$d/queries_$w.txt" "-Pworkload=$w" "-PoutputDir=$d/$w" "-Pcandidates=$d/designs.tsv" -PpartitionSize=2 -Pbudget=512 -Pseed=55
+          done
+          python3 - "$d" <<'PY'
+          import csv, sys
+          from pathlib import Path
+          root = Path(sys.argv[1])
+          def rows(path):
+              with path.open(newline="") as f:
+                  return list(csv.DictReader(f))
+          both = rows(root/"both/results.csv")
+          for w in ("uniform", "zipf"):
+              selected = rows(root/w/"results.csv")
+              assert len(selected) == 4
+              assert selected == [r for r in both if r["workload"] == w], w
+          print("Selected workload results exactly match both-workload evaluator.")
+          PY
