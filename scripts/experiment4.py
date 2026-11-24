@@ -5,11 +5,13 @@ from collections import Counter
 import heapq
 import ipaddress
 import json
+import os
 from pathlib import Path
 import re
 import time
+from urllib.request import Request, urlopen
 
-from experiment3 import EXPECTED, HASH_VERSION, MODEL, ROOT, digest
+from experiment3 import EXPECTED, HASH_VERSION, MODEL, ROOT, digest, read_response
 
 CATEGORIES = ("ipv4", "non_www_single_dot", "non_www_multiple_dots",
               "www_simple", "www_complex", "other")
@@ -268,19 +270,107 @@ def prepare(args):
     print(f"Profile prompt: {args.out/'prompt.md'}; matched control: {args.out/'prompt_control.md'}")
 
 
+ARMS = {"profiled": "prompt.md", "control": "prompt_control.md"}
+
+
+def prepared_config(out):
+    cfg = json.loads((out/"config.json").read_text(encoding="utf-8"))
+    if (cfg.get("experiment"), cfg.get("category_version"), cfg.get("evaluation_scope")) != (
+            4, CATEGORY_VERSION, "full_selected_workload_in_sample"):
+        raise ValueError("Expected a current Experiment 4 prepared run")
+    if cfg.get("workload") not in ("uniform", "zipf") or cfg.get("candidates_per_call") != 12:
+        raise ValueError("Invalid prepared workload or candidate count")
+    for name in ("dataset_profile.json", "workload_profile.json", "prompt_profile.json",
+                 "examples.json", *ARMS.values()):
+        if digest(out/name) != cfg["output_sha256"].get(name):
+            raise ValueError(f"Prepared artifact changed: {name}")
+    return cfg
+
+
+def generate(args):
+    """Make exactly one explicit AI call for the selected prepared prompt."""
+    cfg = prepared_config(args.out)
+    if not cfg["official_input_hashes_match"] and not args.allow_unpinned:
+        raise ValueError("Unpinned input; use --allow-unpinned only if intentional")
+    key = os.environ.get("ANTHROPIC_API_KEY")
+    if not key:
+        raise ValueError("Set ANTHROPIC_API_KEY in your shell")
+    prompt_name = ARMS[args.arm]
+    model = args.model or cfg["model"]
+    effort = cfg["effort"]
+    body = {
+        "model": model, "max_tokens": cfg["max_tokens"],
+        "output_config": {"effort": effort},
+        "messages": [{"role": "user", "content": (args.out/prompt_name).read_text(encoding="utf-8")}],
+    }
+    dest = args.out/"ai"/args.arm/f"call_{args.call}"
+    # Reserve a unique output directory before making a paid request. Never
+    # silently repeat a request if a previous attempt failed or timed out.
+    dest.mkdir(parents=True, exist_ok=False)
+    request = {
+        "workload": cfg["workload"], "arm": args.arm, "call": args.call,
+        "prompt_file": prompt_name, "prompt_sha256": digest(args.out/prompt_name),
+        "prepared_config_sha256": digest(args.out/"config.json"),
+        "model": model, "effort": effort, "max_tokens": cfg["max_tokens"],
+    }
+    save(dest/"request.json", request)
+    req = Request("https://api.anthropic.com/v1/messages",
+                  data=json.dumps(body).encode("utf-8"),
+                  headers={"x-api-key": key, "anthropic-version": "2023-06-01",
+                           "content-type": "application/json"}, method="POST")
+    start = time.perf_counter()
+    with urlopen(req, timeout=600) as response:
+        raw = json.load(response)
+    save(dest/"api_raw.json", raw)
+    content = "".join(b["text"] for b in raw["content"] if b["type"] == "text")
+    response_path = dest/"response.json"
+    response_path.write_text(content, encoding="utf-8")
+    if raw.get("stop_reason") != "end_turn":
+        raise ValueError(f"Incomplete response ({raw.get('stop_reason')}); raw response preserved in {dest}")
+    candidates = read_response(response_path)
+    save(dest/"validated_candidates.json", {"candidates": candidates})
+    save(dest/"generation.json", {
+        **request, "returned_model": raw.get("model"), "usage": raw.get("usage"),
+        "elapsed_seconds": round(time.perf_counter()-start, 3),
+        "response_sha256": digest(response_path),
+        "validated_candidates_sha256": digest(dest/"validated_candidates.json"),
+        "candidate_count": len(candidates),
+    })
+    print(f"{cfg['workload']} / {args.arm} / call {args.call}: {len(candidates)} validated candidates")
+    print(f"Model: {raw.get('model')}; usage: {json.dumps(raw.get('usage'))}")
+    print(dest)
+
+
+def positive_int(value):
+    result = int(value)
+    if result < 1:
+        raise argparse.ArgumentTypeError("must be a positive integer")
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command",choices=["prepare"])
-    parser.add_argument("--workload",required=True,choices=["uniform","zipf"])
-    parser.add_argument("--data",type=Path,default=ROOT/"data/shalla")
-    parser.add_argument("--dataset-file",type=Path)
-    parser.add_argument("--query-file",type=Path)
-    parser.add_argument("--examples",type=Path,default=DEFAULT_EXAMPLES)
-    parser.add_argument("--out",required=True,type=Path)
-    parser.add_argument("--first-length-bucket",type=int,choices=[0,4],default=4)
-    parser.add_argument("--allow-unpinned",action="store_true",help="Explicit opt-in for custom data or fixtures")
+    commands = parser.add_subparsers(dest="command", required=True)
+    prep = commands.add_parser("prepare", help="Extract characteristics and prepare both prompts")
+    prep.add_argument("--workload",required=True,choices=["uniform","zipf"])
+    prep.add_argument("--data",type=Path,default=ROOT/"data/shalla")
+    prep.add_argument("--dataset-file",type=Path)
+    prep.add_argument("--query-file",type=Path)
+    prep.add_argument("--examples",type=Path,default=DEFAULT_EXAMPLES)
+    prep.add_argument("--out",required=True,type=Path)
+    prep.add_argument("--first-length-bucket",type=int,choices=[0,4],default=4)
+    prep.add_argument("--allow-unpinned",action="store_true",help="Explicit opt-in for custom data or fixtures")
+    gen = commands.add_parser("generate", help="One explicit paid AI call, using an existing prepared run")
+    gen.add_argument("--out",required=True,type=Path)
+    gen.add_argument("--arm",required=True,choices=list(ARMS))
+    gen.add_argument("--call",type=positive_int,default=1,help="Unique independent call number")
+    gen.add_argument("--model",help="Optional model override; keep identical across all arms")
+    gen.add_argument("--allow-unpinned",action="store_true",help="Explicit opt-in for custom data")
     args = parser.parse_args()
-    prepare(args)
+    if args.command == "prepare":
+        prepare(args)
+    else:
+        generate(args)
 
 
 if __name__ == "__main__":
