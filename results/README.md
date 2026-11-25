@@ -9,6 +9,10 @@
 
 Both CSVs share the same 47-column schema, documented in [the data dictionary](joint_cm_comparison.md#data-dictionary). The comparison table covers all candidates at the original setting, whereas the sensitivity table varies partition size and budget for the selected winners.
 
+## Figures
+
+[Figure index and reproduction commands](figures/README.md): eight publication-ready figure groups, available in SVG, PDF and PNG.
+
 ## Supporting results
 
 | Directory | Contents |
