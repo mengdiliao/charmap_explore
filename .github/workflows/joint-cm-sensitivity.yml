@@ -1,0 +1,106 @@
+name: Joint CM sensitivity of matching-workload winners
+on:
+  push:
+    branches: ['experiment/simple-statistical-profiling']
+    paths:
+      - '.github/workflows/joint-cm-sensitivity.yml'
+      - 'scripts/joint_cm_sensitivity.py'
+      - 'experiments/joint_cm_sensitivity/config.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: joint-cm-sensitivity-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 scripts/joint_cm_sensitivity.py validate
+
+  sweep:
+    needs: validate-plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        workload: [uniform, zipf]
+        partition_size: [500, 2000, 8000, 32000, 128000]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: shalla-dataset-and-official-workloads
+          run-id: 44195004791
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: .
+      - name: Evaluate one profiled winner only on its matching workload
+        run: |
+          python3 scripts/joint_cm_sensitivity.py run \
+            --workload ${{ matrix.workload }} \
+            --partition-size ${{ matrix.partition_size }} \
+            --data data/shalla \
+            --out /tmp/joint-cm-sensitivity
+      - uses: actions/upload-artifact@v4
+        with:
+          name: joint-cm-sensitivity-${{ matrix.workload }}-p${{ matrix.partition_size }}
+          path: /tmp/joint-cm-sensitivity/${{ matrix.workload }}_p${{ matrix.partition_size }}.csv
+          if-no-files-found: error
+          retention-days: 90
+
+  publish:
+    needs: sweep
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: joint-cm-sensitivity-*-p*
+          path: /tmp/joint-cm-sensitivity
+          merge-multiple: true
+      - name: Validate, merge and reproduce complete results
+        run: |
+          python3 scripts/joint_cm_sensitivity.py merge --source-dir /tmp/joint-cm-sensitivity
+          python3 scripts/joint_cm_sensitivity.py check
+          cat results/joint_cm_sensitivity.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: joint-cm-sensitivity-combined
+          path: |
+            results/joint_cm_sensitivity.csv
+            results/joint_cm_sensitivity.md
+            runs/joint_cm_sensitivity/evaluations.csv
+          if-no-files-found: error
+          retention-days: 90
+      - name: Publish complete verified results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/joint_cm_sensitivity.csv results/joint_cm_sensitivity.md
+          git add -f runs/joint_cm_sensitivity/evaluations.csv
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish validated matching-workload Joint CM sensitivity results"
+            git push origin HEAD:experiment/simple-statistical-profiling
+          fi
