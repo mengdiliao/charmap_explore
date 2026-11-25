@@ -1,0 +1,124 @@
+{
+  "selection_point": {
+    "partition_size": 8000,
+    "budget_bytes": 512
+  },
+  "partition_seed": 55,
+  "hash_version": "fnv1a-mix-v1",
+  "input_sha256": {
+    "dataset.txt": "081bf7628046d046533f63ed2e049e4aff6bd21d3151b64a41c8cbfc584a4a2a",
+    "queries_uniform.txt": "095d4cbd2cc6091bd6a660ad0826c203b00b8d70c364a0eb8319b86d49529fb8",
+    "queries_zipf.txt": "7058cc63df718c76872a6788a35161a2d19156db739c4400f2a548799559cc52"
+  },
+  "master_sha256": "103e007116b0c9d6a911946a668df44496e7bce3dbf8d7b068c15231149de295",
+  "historical_sweep_sha256": "e9c17978f3ba3707a6946a2e27b9a7b9bc1c83eb70d72f98bd888dd918269c3e",
+  "budgets": {
+    "500": [
+      32,
+      64,
+      128,
+      256
+    ],
+    "2000": [
+      128,
+      256,
+      512,
+      1024
+    ],
+    "8000": [
+      256,
+      512,
+      1024,
+      2048,
+      4096
+    ],
+    "32000": [
+      256,
+      2048,
+      4096,
+      8192,
+      16384
+    ],
+    "128000": [
+      256,
+      8192,
+      16384,
+      32768,
+      65536
+    ]
+  },
+  "selected": {
+    "uniform": {
+      "Random": {
+        "solution_id": "RANDOM_02",
+        "source_proposal_id": "R1_02",
+        "positions": "1;3;5;11",
+        "reason": "",
+        "pruning_pct": "19.029579508",
+        "algorithm": "CM_004",
+        "generation_id": "",
+        "model": "",
+        "call": "1"
+      },
+      "AI_NoCharacteristics": {
+        "solution_id": "AI_NC_04",
+        "source_proposal_id": "A1_04",
+        "positions": "0;1;-5;-1",
+        "reason": "Keeps the reference prefix but swaps the suffix 'o' for a name character.",
+        "pruning_pct": "18.326640874",
+        "algorithm": "CM_007",
+        "generation_id": "AI_NC_call_1",
+        "model": "claude-opus-5-5",
+        "call": "1"
+      },
+      "AI_HumanCharacteristics": {
+        "solution_id": "AI_HC_U_06",
+        "source_proposal_id": "A06",
+        "positions": "0;5;-6;-5",
+        "reason": "Position 0 is informative for non-www keys, and the other positions avoid the shared tail.",
+        "pruning_pct": "16.394329344",
+        "algorithm": "E4_A06",
+        "generation_id": "AI_HC_U_call_1",
+        "model": "claude-opus-5-5",
+        "call": "1"
+      }
+    },
+    "zipf": {
+      "Random": {
+        "solution_id": "RANDOM_06",
+        "source_proposal_id": "R1_06",
+        "positions": "6;7;-10;-5",
+        "reason": "",
+        "pruning_pct": "22.097085792",
+        "algorithm": "CM_012",
+        "generation_id": "",
+        "model": "",
+        "call": "1"
+      },
+      "AI_NoCharacteristics": {
+        "solution_id": "AI_NC_03",
+        "source_proposal_id": "A1_03",
+        "positions": "0;4;-5;-1",
+        "reason": "Position 4 skips the www prefix to reach the first name character.",
+        "pruning_pct": "9.047968798",
+        "algorithm": "CM_005",
+        "generation_id": "AI_NC_call_1",
+        "model": "claude-opus-5-5",
+        "call": "1"
+      },
+      "AI_HumanCharacteristics": {
+        "solution_id": "AI_HC_Z_08",
+        "source_proposal_id": "A08",
+        "positions": "4;5;-9;-5",
+        "reason": "Reaches before common endings such as blogspot.",
+        "pruning_pct": "16.869446230",
+        "algorithm": "E4_A08",
+        "generation_id": "AI_HC_Z_call_1",
+        "model": "claude-opus-5-5",
+        "call": "1"
+      }
+    }
+  },
+  "evaluation_scope": "matching_workload_only",
+  "selection": "fixed_post_hoc_best_at_anchor"
+}
