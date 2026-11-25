@@ -1,4 +1,4 @@
-# Experiment 3 — Level 1: one-shot AI position selection
+# Experiment 3 — AI without Characteristics (Level 1)
 
 ## 1. Objective
 
@@ -60,10 +60,51 @@ Exact joint pruning is a ceiling for that position combination, not the full-key
 
 ## 6. Results and limitations
 
-See the [published result guide](../runs/experiment3_unified_hashing/README.md) for the numerical summary and raw files. One AI response, one random seed, one partition seed and one hash configuration were tested. Both workloads are fully evaluated, with no holdout and no iteration or detailed profiling fed to the AI. The best candidate is identified post hoc; this is a stage result, not a statistically validated claim that AI improves selection or that the best design generalizes.
+| Workload | Bloom | AI mean / best | Random mean / best |
+| --- | ---: | ---: | ---: |
+| Uniform | 14.15% | 14.81% / 18.33% | 14.93% / 19.03% |
+| Zipfian | 14.52% | 6.03% / 9.05% | 11.36% / 22.10% |
+
+Joint CM can outperform Bloom at this budget, but the single AI response does not outperform the random group overall. Two random candidates beat Bloom on both workloads. These are exploratory results, not evidence of generalization to held-out workloads.
+
+See the [published result guide](../runs/experiment3_unified_hashing/README.md) for full numerical results, candidate positions and raw files. The [full benchmark CSV](../runs/experiment3_unified_hashing/results.csv) and [candidate-level CSV](../runs/experiment3_unified_hashing/proposal_results.csv) are also included in the repository. The consolidated comparison with Experiment 4 is available in [joint_cm_comparison.csv](../results/joint_cm_comparison.csv). One AI response, one random seed, one partition seed and one hash configuration were tested. Both workloads are fully evaluated, with no holdout and no iteration or detailed profiling fed to the AI. The best candidate is identified post hoc; this is a stage result, not a statistically validated claim that AI improves selection or that the best design generalizes.
 
 ## 7. Reproduce
 
-Use the [root README](../README.md#reproduce-the-published-result) to evaluate copies of the already frozen candidates. Python verifies the source data and prompt/response hashes, writes designs.tsv and runtime.json, invokes the Gradle positionEvaluator task, then writes proposal_results.csv and report.md. The source run is not modified. JDK 21 and Python 3.10+ are sufficient for evaluation; Gradle 8.14.3 and JUnit dependencies are fetched when required. Set JAVA_HEAP=6g if more heap is needed; the default is 4g. The original data-generation dependencies are separate. For additional independent AI experiments, see [scripts](../scripts/README.md); these are not needed for this result.
+Install Python 3.10+ and JDK 21; use the committed Gradle wrapper. Obtain the three Shalla text files using the [data guide](data-preparation.md). From the repository root:
+
+```bash
+./gradlew clean test
+
+src=runs/experiment3_unified_hashing
+dst=runs/experiment3_reproduced
+mkdir "$dst" &&
+  cp "$src"/{config.json,prompt.md,response_1.json,frozen.json} "$dst/" &&
+  python3 scripts/experiment3.py evaluate --out "$dst"
+```
+
+This uses the already frozen AI/random candidates, verifies the input hashes, and writes new results without overwriting the published run. No AI API key or new AI call is needed. Use a new output directory for each rerun.
+
+Python verifies the source data and prompt/response hashes, writes designs.tsv and runtime.json, invokes the Gradle positionEvaluator task, then writes proposal_results.csv and report.md. The source run is not modified. JDK 21 and Python 3.10+ are sufficient for evaluation; Gradle 8.14.3 and JUnit dependencies are fetched when required. Set JAVA_HEAP=6g if more heap is needed; the default is 4g. The original data-generation dependencies are separate. For additional independent AI experiments, see [scripts](../scripts/README.md); these are not needed for this result.
 
 Verification: `./gradlew clean test`. The [unified verification workflow](../.github/workflows/unified-hashing.yml) tests shared hashing, replay and full Shalla reference/profiling consistency. Historical CSVs used by those checks are not part of the main experiment results.
+
+## 8. Source code
+
+All Java packages below have a local README explaining their files.
+
+| Package | Responsibility |
+| --- | --- |
+| [data](../src/main/java/charmap/data/README.md) | Read prepared inputs and assign partitions |
+| [encoding](../src/main/java/charmap/encoding/README.md) | Project characters and represent exact tokens |
+| [hashing](../src/main/java/charmap/hashing/README.md) | Shared hash and bit mapping |
+| [statistics](../src/main/java/charmap/statistics/README.md) | Bloom, Joint CM and shared bitmap representation |
+| [evaluation](../src/main/java/charmap/evaluation/README.md) | Build/evaluate statistics, diagnostics and CSVs |
+| [serialization](../src/main/java/charmap/serialization/README.md) | Write actual metadata bytes |
+| [experiments](../src/main/java/charmap/experiments/README.md) | Experiment entry points |
+| [scripts](../scripts/README.md) | Python orchestration and input preparation |
+| [tests](../src/test/java/charmap/README.md) | Correctness and reproducibility checks |
+
+The Experiment 3 entry point is [PositionEvaluator.java](../src/main/java/charmap/experiments/PositionEvaluator.java). Earlier experiment code and reference CSVs remain for reproducibility and CI; they are not part of the stage-result comparison.
+
+[Back to project overview](../README.md)

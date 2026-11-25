@@ -15,7 +15,7 @@
 
 ## Main commands
 
-The [published run](../runs/experiment3_unified_hashing/README.md) already includes the AI response and frozen random controls. Follow the [root instructions](../README.md#reproduce-the-published-result) to reproduce it with evaluate only.
+The [published run](../runs/experiment3_unified_hashing/README.md) already includes the AI response and frozen random controls. Follow the [Experiment 3 reproduction instructions](../docs/experiment3-level1.md#7-reproduce) to reproduce it with evaluate only.
 
 For a genuinely new independent Level 1 run, choose a fresh directory and use the same --out value for all steps:
 
@@ -30,3 +30,16 @@ python3 scripts/experiment3.py evaluate --out runs/experiment3_new
 Alternatively, supply the unedited JSON in response_1.json before freeze. The generate command is the only AI API call. Keep credentials out of Git. The run is not a reproduction of the published AI sample if generate is executed again.
 
 The replay command is designed to take an **original legacy-hashing** frozen run and evaluate it with unified hashing. It copies input/provenance files and, if an earlier benchmark CSV is present, produces a paired hash comparison. To reproduce the already unified published run, use evaluate on a fresh copy of the four frozen inputs instead (not replay against itself).
+
+## Results and figures
+
+| File | Responsibility |
+| --- | --- |
+| [aggregate_results.py](aggregate_results.py) | Rebuild the 76-row comparison from published run artifacts. |
+| [joint_cm_sensitivity.py](joint_cm_sensitivity.py) | Evaluate frozen matching-workload winners and merge the 276-row sensitivity table. |
+| [position_budget_sensitivity.py](position_budget_sensitivity.py) | Original Experiment 3 sensitivity sweep; retained for reproducibility. |
+| [plot_joint_cm_comparison.py](plot_joint_cm_comparison.py) | Plot four fixed-configuration comparison figures. |
+| [plot_joint_cm_sensitivity.py](plot_joint_cm_sensitivity.py) | Plot four sensitivity figures. |
+| [joint_cm_plotting.py](joint_cm_plotting.py) | Shared plotting conventions and PNG export. |
+
+See the [results index](../results/README.md) and [figure instructions](../results/figures/README.md).

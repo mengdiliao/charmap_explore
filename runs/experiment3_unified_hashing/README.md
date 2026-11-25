@@ -44,4 +44,4 @@ R1_06 and R1_12 beat Bloom on both workloads. The maximum observed gain over Blo
 | benchmark/*.bin | Serialized physical metadata for each non-Oracle method. |
 | legacy_results.csv, legacy_runtime.json, hash_comparison.csv | Original hashing ablation artifacts retained solely for traceability; not used in the main result comparison above. |
 
-The numerical values above derive from the published CSVs. See [methodology](../../docs/experiment3-level1.md) for metric definitions and [reproduction instructions](../../README.md#reproduce-the-published-result) to rerun in a separate directory without changing the published snapshot.
+The numerical values above derive from the published CSVs. See [methodology](../../docs/experiment3-level1.md) for metric definitions and [reproduction instructions](../../docs/experiment3-level1.md#7-reproduce) to rerun in a separate directory without changing the published snapshot.

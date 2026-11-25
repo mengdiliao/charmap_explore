@@ -1,75 +1,45 @@
-# Experiment 4 — Simple Statistical Profiling 
+# AI-guided Joint Character Maps
 
-This branch adds workload-specific offline profiling and prompts. See [Experiment 4 instructions](docs/experiment4-simple-profiling.md) for the eight characteristics, file-selection flags, matched control, full-workload profiling, raw dot-count categories and tests. The prepare command is offline; generate makes one explicit AI API call for a selected prompt arm. The evaluate command runs the four-group comparison for one full workload using the existing profiled response, without any API call.
+Research on AI-designed statistics for equality-based partition pruning of string identifiers.
 
----
+## Research questions
 
-# Experiment 3 — AI-guided Joint Character Maps
+- Can AI select character-position combinations that outperform random selection and an optimized Bloom filter?
+- Does providing dataset and workload characteristics improve AI-generated designs?
+- How sensitive are the selected designs to partition size and metadata budget?
 
-Stage results for equality-based partition pruning on the Shalla dataset.
+## Experimental setup
 
-**Research question:** Can an AI model select character-position combinations that prune more partitions than random selection and an optimized full-key Bloom filter, under the same metadata payload budget?
+The experiments use the Shalla dataset (2,926,705 unique ASCII keys) and two full query workloads: Uniform and Zipfian (10 million query occurrences each). The main comparison uses 8,000 keys per partition and a 512-byte bitmap budget (configured BPK = 0.512). All methods must produce zero false negatives.
 
-## Experiment at a glance
+## Experiments
 
-| Setting | Value |
+| Experiment | Description | Documentation |
+| --- | --- | --- |
+| Experiment 3 — AI without characteristics | One AI response with task description and samples; 12 AI and 12 length-matched random combinations, evaluated on both workloads. | [Design, methodology and reproduction](docs/experiment3-level1.md) |
+| Experiment 4 — AI with human-selected characteristics | Eight additional dataset/workload characteristics; 12 AI combinations generated and evaluated separately for each workload. | [Profiling, generation and evaluation](docs/experiment4-simple-profiling.md) |
+| Joint CM sensitivity | Freeze the best Random and AI designs at the original setting, then evaluate each on its matching workload under 23 partition-size/budget configurations. | [Design and reproduction](experiments/joint_cm_sensitivity/README.md) |
+
+## Results
+
+| Result | Data | Explanation |
+| --- | --- | --- |
+| Fixed-configuration comparison (76 rows) | [CSV](results/joint_cm_comparison.csv) | [Method definitions and data dictionary](results/joint_cm_comparison.md) |
+| Sensitivity analysis (276 rows) | [CSV](results/joint_cm_sensitivity.csv) | [Results and analysis](results/joint_cm_sensitivity.md) |
+
+See the [results index](results/README.md) and [figures](results/figures/README.md) for all eight plots and reproduction commands.
+
+The additional characteristics improve average AI pruning on Zipf, but not on Uniform at the original setting. Random still finds the best individual solution on both workloads at that setting. The profiled AI designs have higher exact-projection pruning potential, although the limited bitmap budget restricts actual pruning. These are exploratory, in-sample results, not evidence of consistent AI superiority.
+
+## Repository guide
+
+| Directory | Contents |
 | --- | --- |
-| Stored keys | 2,926,705 unique ASCII strings (Shalla) |
-| Workloads | 10M Uniform + 10M Zipfian (exponent 1.5) |
-| Partition layout | Seed 55; 8,000 keys per partition; 366 partitions |
-| Payload | 512 bytes per partition (4,096 bits; nominal 0.512 bits/key) |
-| AI / random | 12 frozen AI candidates / 12 length-matched random candidates |
-| Baselines | Optimized Bloom (k=1), reference Joint CM [0,1,-2,-1], exact Oracle |
-| Hash mapping | Shared FNV-1a, one mix, unsigned modulo; fnv1a-mix-v1 |
-| Correctness | Zero false negatives in all 54 benchmark rows |
+| [docs/](docs/) | Experimental methodology and [data preparation](docs/data-preparation.md) |
+| [scripts/](scripts/README.md) | Data preparation, AI generation, evaluation, aggregation and plotting |
+| [src/main/java/charmap/](src/main/java/charmap/) | Statistics, shared hashing, evaluation and serialization; each package has its own guide |
+| [experiments/](experiments/) | Frozen sensitivity selections and configurations |
+| [runs/](runs/) | Published prompts, responses, profiles and raw evaluation artifacts |
+| [results/](results/README.md) | Consolidated CSVs, analyses and figures |
 
-### Main findings
-
-| Workload | Bloom | AI mean / best | Random mean / best |
-| --- | ---: | ---: | ---: |
-| Uniform | 14.15% | 14.81% / 18.33% | 14.93% / 19.03% |
-| Zipfian | 14.52% | 6.03% / 9.05% | 11.36% / 22.10% |
-
-Joint CM can outperform Bloom at this budget, but the single AI response does not outperform the random group overall. Two random candidates beat Bloom on both workloads. These are exploratory results, not evidence of generalization to held-out workloads.
-
-## Start here
-
-- [Experimental design and methodology](docs/experiment3-level1.md): candidate selection, shared hashing, metrics, correctness, limitations and reproducibility.
-- [Shalla data and workload preparation](docs/data-preparation.md): source, exact data counts and how to obtain the input files.
-- [Published results and artifact guide](runs/experiment3_unified_hashing/README.md): main findings, candidate positions and where to find the raw results.
-- [Full benchmark CSV](runs/experiment3_unified_hashing/results.csv) and [candidate-level CSV](runs/experiment3_unified_hashing/proposal_results.csv).
-- [Original AI prompt](runs/experiment3_unified_hashing/prompt.md), [response](runs/experiment3_unified_hashing/response_1.json) and [frozen designs](runs/experiment3_unified_hashing/frozen.json).
-
-## Reproduce the published result
-
-Install Python 3.10+ and JDK 21; use the committed Gradle wrapper. Obtain the three Shalla text files using the [data guide](docs/data-preparation.md). From the repository root:
-
-```bash
-./gradlew clean test
-
-src=runs/experiment3_unified_hashing
-dst=runs/experiment3_reproduced
-mkdir "$dst" &&
-  cp "$src"/{config.json,prompt.md,response_1.json,frozen.json} "$dst/" &&
-  python3 scripts/experiment3.py evaluate --out "$dst"
-```
-
-This uses the already frozen AI/random candidates, verifies the input hashes, and writes new results without overwriting the published run. No AI API key or new AI call is needed. Use a new output directory for each rerun.
-
-## Source code
-
-All Java packages below have a local README explaining their files.
-
-| Package | Responsibility |
-| --- | --- |
-| [data](src/main/java/charmap/data/README.md) | Read prepared inputs and assign partitions |
-| [encoding](src/main/java/charmap/encoding/README.md) | Project characters and represent exact tokens |
-| [hashing](src/main/java/charmap/hashing/README.md) | Shared hash and bit mapping |
-| [statistics](src/main/java/charmap/statistics/README.md) | Bloom, Joint CM and shared bitmap representation |
-| [evaluation](src/main/java/charmap/evaluation/README.md) | Build/evaluate statistics, diagnostics and CSVs |
-| [serialization](src/main/java/charmap/serialization/README.md) | Write actual metadata bytes |
-| [experiments](src/main/java/charmap/experiments/README.md) | Experiment entry points |
-| [scripts](scripts/README.md) | Python orchestration and input preparation |
-| [tests](src/test/java/charmap/README.md) | Correctness and reproducibility checks |
-
-The Experiment 3 entry point is PositionEvaluator.java. Earlier experiment code and reference CSVs remain for reproducibility and CI; they are not part of the stage-result comparison.
+For reproduction, follow the experiment-specific documentation above. Evaluation of the existing frozen designs does not require new AI calls.

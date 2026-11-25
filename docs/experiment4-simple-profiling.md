@@ -1,4 +1,4 @@
-# Experiment 4 — Simple Statistical Profiling 
+# Experiment 4 — AI with Human-selected Characteristics
 
 ## Goal
 
@@ -74,7 +74,9 @@ python3 scripts/experiment4.py generate --out runs/experiment4_zipf --arm profil
 
 The profiled arm uses prompt.md. The optional control arm uses prompt_control.md; it is not required by the current evaluation. Use one fresh conversation per request; do not give evaluator feedback. The generation command verifies the prepared artifact hashes and reuses Experiment 3 candidate validation. Both arms use the same model, effort and candidate constraints. If a model override is needed, use the same --model value for every arm and workload; the actual model returned by the API is also recorded. Optional --call 2 (and subsequent positive numbers) makes an independent repeat. Unpinned runs require explicit --allow-unpinned.
 
-Each request reserves ai/<arm>/call_<n>/ and records request.json before contacting the API. Successful calls also save api_raw.json, response.json, validated_candidates.json and generation.json (actual model, token usage, wall time and hashes). A repeated call number is rejected to prevent accidental paid duplicate requests. Incomplete or invalid responses are preserved, not silently retried; inspect the raw response and use a new call number for any intentional retry, retaining the original attempt. No credentials are written to disk by the script. ## Evaluation (no AI call)
+Each request reserves ai/<arm>/call_<n>/ and records request.json before contacting the API. Successful calls also save api_raw.json, response.json, validated_candidates.json and generation.json (actual model, token usage, wall time and hashes). A repeated call number is rejected to prevent accidental paid duplicate requests. Incomplete or invalid responses are preserved, not silently retried; inspect the raw response and use a new call number for any intentional retry, retaining the original attempt. No credentials are written to disk by the script.
+
+## Evaluation (no AI call)
 
 Use the existing generated profiled response. JDK 21 and the Gradle wrapper are required.
 
@@ -101,6 +103,13 @@ runs/experiment4_uniform/evaluation/profiled/call_1/
 
 results.csv includes all original evaluator metrics, candidate reasons, historical reference score, and deltas versus Bloom and Experiment 3 best. summary.json and report.md summarize best, mean, median, and counts above baselines. Historical best is selected post hoc; the comparison is in-sample and exploratory. The optional control prompt remains available for a later matched experiment.
 
+## Published results
+
+- [Uniform profiled evaluation](../runs/experiment4_uniform/evaluation/profiled/call_1/results.csv)
+- [Zipf profiled evaluation](../runs/experiment4_zipf/evaluation/profiled/call_1/results.csv)
+- [Consolidated Experiment 3 and 4 comparison](../results/joint_cm_comparison.csv) and [data dictionary](../results/joint_cm_comparison.md)
+- [Sensitivity analysis](../results/joint_cm_sensitivity.md) and [figures](../results/figures/README.md)
+
 ## Test
 
 ```bash
@@ -108,3 +117,5 @@ python3 -m unittest discover -s scripts -p 'test_experiment4.py' -v
 ```
 
 Tests exercise raw structural categories, frequency-weighted statistics, full occurrence counting, independent prompts, output hashes, mocked API generation, and profiled-only evaluation orchestration using synthetic fixtures; the full Shalla files are not required. Full runs retain the dataset membership set and selected full-workload query Counter in memory; no duplicate query files are written. Measure actual runtime and memory on the real data. Generated files are ignored by Git under data/ and runs/.
+
+[Back to project overview](../README.md)
