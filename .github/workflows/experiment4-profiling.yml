@@ -12,6 +12,8 @@ jobs:
         with:
           python-version: '3.12'
       - run: python3 -m unittest discover -s scripts -p 'test_experiment4.py' -v
+      - name: Verify master results are reproducible
+        run: python3 scripts/aggregate_results.py --check
   evaluator-smoke:
     runs-on: ubuntu-latest
     steps:
