@@ -30,25 +30,20 @@ jobs:
           python scripts/plot_joint_cm_sensitivity.py
           python - <<'PY'
           from pathlib import Path
-          import xml.etree.ElementTree as ET
           from PIL import Image
           root = Path('results/figures')
           for group in ('comparison','sensitivity'):
               p = root / group
-              for ext in ('svg','pdf','png'):
-                  files = list(p.glob('*.'+ext))
-                  assert len(files)==4, (group,ext,len(files))
-                  for f in files:
-                      assert f.stat().st_size>1000, f
-                      if ext=='svg':
-                          ET.parse(f)
-                      elif ext=='pdf':
-                          assert f.read_bytes().startswith(b'%PDF-')
-                      else:
-                          with Image.open(f) as im:
-                              assert min(im.size)>500, f
-                              im.verify()
-          print('Verified eight figure sets in three formats (24 files).')
+              files = sorted(p.glob('*.png'))
+              assert len(files)==4, (group,len(files))
+              assert not list(p.glob('*.svg')) and not list(p.glob('*.pdf')), group
+              for f in files:
+                  assert f.stat().st_size>1000, f
+                  with Image.open(f) as im:
+                      assert im.format == 'PNG' and min(im.size)>500, f
+                      assert all(abs(d-300)<1 for d in im.info['dpi']), f
+                      im.verify()
+          print('Verified eight 300-dpi PNG figures; header spacing checked during rendering.')
           PY
       - uses: actions/upload-artifact@v4
         with:
@@ -61,6 +56,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add results/figures/
           if ! git diff --cached --quiet; then
-            git commit -m "Render eight Joint CM thesis figure sets"
+            git commit -m "Render eight PNG Joint CM thesis figures"
             git push origin HEAD:experiment/simple-statistical-profiling
           fi

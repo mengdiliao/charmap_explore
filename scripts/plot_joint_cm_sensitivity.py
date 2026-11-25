@@ -42,8 +42,8 @@ def p_label(p):
 
 def vs_bpk(rows,args):
     fig,axes=plt.subplots(2,5,figsize=(15,6.1),sharex=True,sharey=True)
-    heading(fig,"Pruning rate versus configured bits per key",
-            "Frozen workload-specific winners | each column fixes partition size | constant-BPK matrix")
+    heading(fig,"Pruning rate vs. configured BPK",
+            "Shalla | Fixed workload-specific winners | One partition size per column")
     for i,w in enumerate(WORKLOADS):
         for j,p in enumerate(PARTITIONS):
             ax=axes[i,j]
@@ -62,8 +62,8 @@ def vs_bpk(rows,args):
 
 def vs_partition(rows,args):
     fig,axes=plt.subplots(2,4,figsize=(13.1,6.1),sharex=True,sharey=True)
-    heading(fig,"Pruning rate versus partition size",
-            "Frozen workload-specific winners | each column fixes configured BPK")
+    heading(fig,"Pruning rate vs. partition size",
+            "Shalla | Fixed workload-specific winners | One BPK per column")
     for i,w in enumerate(WORKLOADS):
         for j,b in enumerate(BPKS):
             ax=axes[i,j]
@@ -91,7 +91,7 @@ def deltas(rows,args):
     norm=TwoSlopeNorm(vmin=-vmax,vcenter=0,vmax=vmax)
     fig,axes=plt.subplots(2,2,figsize=(8.6,7.3),sharex=True,sharey=True)
     heading(fig,"Characteristics-guided pruning advantage",
-            "AI with human characteristics minus comparison method | same configuration | percentage points")
+            "Shalla | Profiled AI minus comparison method | Percentage points")
     for i,w in enumerate(WORKLOADS):
         for j,base in enumerate(("Optimized Bloom","AI without characteristics")):
             ax=axes[i,j]
@@ -115,8 +115,8 @@ def deltas(rows,args):
 
 def ceiling(rows,args):
     fig,axes=plt.subplots(1,2,figsize=(9.8,4.7),sharey=True)
-    heading(fig,"Actual pruning and collision-free projection ceiling",
-            "P = 8,000 | solid: measured pruning | dashed: exact projected-tuple pruning")
+    heading(fig,"Actual pruning vs. collision-free ceiling",
+            "Shalla | P = 8,000 | Solid: measured pruning | Dashed: exact ceiling")
     p=ANCHOR[0]
     bpk=(.256,*BPKS)
     methods=CANDIDATES[1:]

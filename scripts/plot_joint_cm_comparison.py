@@ -20,7 +20,7 @@ def validate(rows):
 
 def distribution(rows, args):
     fig, axes = plt.subplots(1, 2, figsize=(9.6, 4.4), sharey=True)
-    heading(fig, "Pruning performance distribution", "Shalla | P = 8,000 | budget = 512 B | 12 candidates per group")
+    heading(fig, "Pruning performance distribution", "Shalla | P = 8,000 | 512 B per partition | 12 candidates per group")
     rng = np.random.default_rng(55)
     for ax, w in zip(axes, WORKLOADS):
         groups = [values(subset(rows, workload=w, method=m), "pruning_pct") for m in CANDIDATES]
@@ -46,7 +46,7 @@ def distribution(rows, args):
 
 def membership(rows,args):
     fig,axes=plt.subplots(1,2,figsize=(9.6,4.3),sharey=True)
-    heading(fig,"Pruning by query membership","Mean pruning rate across 12 candidates per selection method")
+    heading(fig,"Positive vs. negative query pruning","Shalla | Mean across 12 candidates per method")
     x=np.arange(3)
     for ax,w in zip(axes,WORKLOADS):
         groups=[subset(rows,workload=w,method=m) for m in CANDIDATES]
@@ -68,7 +68,7 @@ def membership(rows,args):
 
 def tradeoff(rows,args):
     fig,axes=plt.subplots(2,2,figsize=(8.7,6.6),sharex=True,sharey="row")
-    heading(fig,"Discrimination and bitmap saturation","Each marker is one candidate; fixed P = 8,000 and budget = 512 B")
+    heading(fig,"Discrimination and bitmap saturation","Shalla | P = 8,000 | 512 B per partition | Each dot is one candidate")
     for col,w in enumerate(WORKLOADS):
         for row,field in enumerate(("exact_joint_pruning_pct","pruning_pct")):
             ax=axes[row,col]
@@ -111,7 +111,7 @@ def position_frequency(rows,args):
             raise ValueError("Position outside search space")
         counts.append([sum(p in s for s in selections) for p in positions])
     fig,ax=plt.subplots(figsize=(13,3.3))
-    heading(fig,"Character position selection frequency","Full 32-position search space | counts out of 12 candidates")
+    heading(fig,"Position selection frequency","Shalla | 32-position search space | Counts out of 12 candidates")
     image=ax.imshow(counts,cmap="Blues",vmin=0,vmax=12,aspect="auto")
     ax.set(xticks=np.arange(32),xticklabels=positions,yticks=np.arange(4),
            yticklabels=[s[2] for s in specs],xlabel="Character position (negative indices count from the end)")
